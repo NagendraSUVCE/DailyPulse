@@ -1,8 +1,93 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
-}
+﻿@using Models.DailyLog
+@model List<DailyLog15Min>
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Daily Log</title>
+    <script>
+        let sortDirection = {};
+        
+        function filterTable() {
+            const filter = document.getElementById("filterInput").value.toLowerCase();
+            const rows = document.querySelectorAll("#dataTable tbody tr");
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll("td");
+                const rowText = Array.from(cells).map(cell => cell.textContent.toLowerCase()).join(" ");
+                row.style.display = rowText.includes(filter) ? "" : "none";
+            });
+        }
+
+        function sortTable(columnIndex) {
+            const table = document.getElementById("dataTable");
+            const rows = Array.from(table.querySelectorAll("tbody tr"));
+            const isAscending = sortDirection[columnIndex] = !sortDirection[columnIndex];
+
+            rows.sort((a, b) => {
+                const aText = a.cells[columnIndex].textContent.trim();
+                const bText = b.cells[columnIndex].textContent.trim();
+
+                if (!isNaN(Date.parse(aText)) && !isNaN(Date.parse(bText))) {
+                    return isAscending 
+                        ? new Date(aText) - new Date(bText) 
+                        : new Date(bText) - new Date(aText);
+                }
+
+                if (!isNaN(aText) && !isNaN(bText)) {
+                    return isAscending 
+                        ? aText - bText 
+                        : bText - aText;
+                }
+
+                return isAscending 
+                    ? aText.localeCompare(bText) 
+                    : bText.localeCompare(aText);
+            });
+
+            const tbody = table.querySelector("tbody");
+            tbody.innerHTML = "";
+            rows.forEach(row => tbody.appendChild(row));
+        }
+    </script>
+</head>
+<body>
+    <h1>Daily Log</h1>
+    <input type="text" id="filterInput" onkeyup="filterTable()" placeholder="Type to filter..." />
+
+    <table id="dataTable" border="1">
+        <thead>
+            <tr>
+                <th onclick="sortTable(0)">dtActivity</th>
+                <th onclick="sortTable(1)">activityDesc</th>
+                @* <th onclick="sortTable(2)">colIndex</th> *@
+                @* <th onclick="sortTable(3)">rowIndex</th> *@
+                @* <th onclick="sortTable(4)">category</th> *@
+                @* <th onclick="sortTable(5)">activityGroup</th> *@
+                @* <th onclick="sortTable(6)">activityName</th> *@
+                @* <th onclick="sortTable(7)">activityIndex</th> *@
+                <th onclick="sortTable(8)">Hrs</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null)
+            {
+                foreach (var log in Model.OrderByDescending(l => l.dtActivity))
+                {
+                    <tr>
+                        <td>@log.dtActivity</td>
+                        <td>@log.activityDesc</td>
+                        @* <td>@log.colIndex</td> *@
+                        @* <td>@log.rowIndex</td> *@
+                        @* <td>@log.category</td> *@
+                        @* <td>@log.activityGroup</td> *@
+                        @* <td>@log.activityName</td> *@
+                        @* <td>@log.activityIndex</td> *@
+                        <td>@log.Hrs</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</body>
+</html>
