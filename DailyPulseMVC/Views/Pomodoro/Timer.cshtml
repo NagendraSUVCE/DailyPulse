@@ -1,0 +1,110 @@
+@model List<DailyPulseMVC.Models.PomodoroEntry>
+@{
+    ViewBag.Title = "Pomodoro Timer";
+}
+
+<h2 style="text-align: center; font-family: Arial, sans-serif; color: #333;">Pomodoro Timer</h2>
+
+<div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; border: 1px solid #ccc; padding: 20px; border-radius: 8px; background-color: #f9f9f9;">
+    <h3 style="text-align: center; color: #555;">Start a New Session</h3>
+    <div style="margin-bottom: 15px;">
+        <label for="daily15MinLogId" style="font-weight: bold;">Daily15MinLogId:</label>
+        <input type="text" id="daily15MinLogId" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;" />
+    </div>
+    <div style="margin-bottom: 15px;">
+        <label for="description" style="font-weight: bold;">Description:</label>
+        <textarea id="description" rows="4" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;"></textarea>
+    </div>
+    <div style="margin-bottom: 15px;">
+        <label for="startTime" style="font-weight: bold;">Start Time:</label>
+        <input type="text" id="startTime" readonly style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; background-color: #e9ecef;" />
+    </div>
+    <div style="margin-bottom: 15px;">
+        <label for="endTime" style="font-weight: bold;">End Time:</label>
+        <input type="text" id="endTime" readonly style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; background-color: #e9ecef;" />
+    </div>
+    <div style="text-align: center;">
+        <button id="startBtn" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Start 25-Min Timer</button>
+    </div>
+    <p id="timerDisplay" style="text-align: center; font-size: 1.5em; margin-top: 15px; color: #333;">25:00</p>
+</div>
+
+<h3 style="text-align: center; font-family: Arial, sans-serif; color: #333; margin-top: 40px;">Previous Sessions</h3>
+<table style="width: 80%; margin: 0 auto; border-collapse: collapse; font-family: Arial, sans-serif; background-color: #fff; border: 1px solid #ccc;">
+    <thead>
+        <tr style="background-color: #007bff; color: white;">
+            <th style="padding: 10px; border: 1px solid #ccc;">Daily15MinLogId</th>
+            <th style="padding: 10px; border: 1px solid #ccc;">Start</th>
+            <th style="padding: 10px; border: 1px solid #ccc;">End</th>
+            <th style="padding: 10px; border: 1px solid #ccc;">Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var entry in Model)
+        {
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ccc;">@entry.Daily15MinLogId</td>
+                <td style="padding: 10px; border: 1px solid #ccc;">@entry.StartTime</td>
+                <td style="padding: 10px; border: 1px solid #ccc;">@entry.EndTime</td>
+                <td style="padding: 10px; border: 1px solid #ccc;">@entry.Description</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+<script>
+    let timer;
+    let startTime;
+
+    document.getElementById("startBtn").addEventListener("click", function () {
+        startTime = new Date();
+        const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+        const istStartTime = new Date(startTime.getTime() + istOffset);
+        document.getElementById("startTime").value = istStartTime.toISOString().slice(0, 19).replace("T", " ");
+
+        let duration = 25 * 60; // 25 minutes
+        let display = document.getElementById("timerDisplay");
+
+        const endTime = new Date(startTime.getTime() + duration * 1000);
+        const istEndTime = new Date(endTime.getTime() + istOffset);
+        document.getElementById("endTime").value = istEndTime.toISOString().slice(0, 19).replace("T", " ");
+
+        timer = setInterval(function () {
+            let minutes = parseInt(duration / 60, 10);
+            let seconds = parseInt(duration % 60, 10);
+            display.textContent = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+            if (--duration < 0) {
+                clearInterval(timer);
+                saveEntry();
+            }
+        }, 1000);
+    });
+
+    function saveEntry() {
+        const daily15MinLogId = document.getElementById("daily15MinLogId").value;
+        const description = document.getElementById("description").value;
+        const startTimeValue = document.getElementById("startTime").value;
+        const endTimeValue = document.getElementById("endTime").value;
+
+        const requestBody = JSON.stringify({
+            Daily15MinLogId: daily15MinLogId,
+            Description: description,
+            StartTime: startTimeValue,
+            EndTime: endTimeValue
+        });
+
+        fetch('@Url.Action("Save", "Pomodoro")', {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: requestBody
+        }).then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  alert("Pomodoro session saved!");
+                  location.reload();
+              }
+          });
+    }
+</script>
+}
