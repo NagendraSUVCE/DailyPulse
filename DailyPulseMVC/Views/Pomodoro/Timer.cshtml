@@ -73,7 +73,9 @@
         timer = setInterval(function () {
             let minutes = parseInt(duration / 60, 10);
             let seconds = parseInt(duration % 60, 10);
-            display.textContent = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+            const currentTime = new Date();
+            const istCurrentTime = new Date(currentTime.getTime() + istOffset);
+            display.textContent = `Time Left: ${minutes}:${seconds < 10 ? "0" : ""}${seconds} | Current Time: ${istCurrentTime.toISOString().slice(0, 19).replace("T", " ")} | End Time: ${istEndTime.toISOString().slice(0, 19).replace("T", " ")}`;
             if (--duration < 0) {
                 clearInterval(timer);
                 saveEntry();
