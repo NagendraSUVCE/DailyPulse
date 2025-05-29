@@ -1,6 +1,14 @@
 @model List<DailyPulseMVC.Models.PomodoroEntry>
 @{
     ViewBag.Title = "Pomodoro Timer";
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const timerDisplay = document.getElementById("timerDisplay");
+            if (timerDisplay) {
+                document.title = timerDisplay.textContent;
+            }
+        });
+    </script>
 }
 
 <h2 style="text-align: center; font-family: Arial, sans-serif; color: #333;">Pomodoro Timer</h2>
@@ -63,7 +71,7 @@
         const istStartTime = new Date(startTime.getTime() + istOffset);
         document.getElementById("startTime").value = istStartTime.toISOString().slice(0, 19).replace("T", " ");
 
-        let duration = 25 * 60; // 25 minutes
+        let duration = 7; // 25 minutes
         let display = document.getElementById("timerDisplay");
 
         const endTime = new Date(startTime.getTime() + duration * 1000);
@@ -71,12 +79,19 @@
         document.getElementById("endTime").value = istEndTime.toISOString().slice(0, 19).replace("T", " ");
 
         timer = setInterval(function () {
-            let minutes = parseInt(duration / 60, 10);
-            let seconds = parseInt(duration % 60, 10);
             const currentTime = new Date();
             const istCurrentTime = new Date(currentTime.getTime() + istOffset);
-            display.textContent = `Time Left: ${minutes}:${seconds < 10 ? "0" : ""}${seconds} | Current Time: ${istCurrentTime.toISOString().slice(0, 19).replace("T", " ")} | End Time: ${istEndTime.toISOString().slice(0, 19).replace("T", " ")}`;
-            if (--duration < 0) {
+            
+              // Find the distance between now and the count down date
+            var distance = istEndTime - istCurrentTime;
+            
+            // Time calculations for days, hours, minutes and seconds
+			let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+			let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            display.textContent = `distance : ${distance} Time Left: ${minutes}:${seconds < 10 ? "0" : ""}${seconds} | Current Time: ${istCurrentTime.toISOString().slice(0, 19).replace("T", " ")} | End Time: ${istEndTime.toISOString().slice(0, 19).replace("T", " ")}`;
+            document.title = display.textContent;
+            if (distance < 0) {
                 clearInterval(timer);
                 saveEntry();
             }
@@ -90,7 +105,8 @@
         const endTimeValue = document.getElementById("endTime").value;
 
         const requestBody = JSON.stringify({
-            Daily15MinLogId: daily15MinLogId,
+            Daily15MinLogId: daily15MinLogId || "daily15MinLogId_Automatic",
+            Description: description || "description_automatic",
             Description: description,
             StartTime: startTimeValue,
             EndTime: endTimeValue

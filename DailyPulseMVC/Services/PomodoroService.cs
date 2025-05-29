@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.IO;
 using DailyPulseMVC.Models;
+using Newtonsoft.Json;
 
 public class PomodoroService
 {
@@ -9,7 +10,7 @@ public class PomodoroService
 
     public PomodoroService()
     {
-        _csvPath = "pomodoro.csv";
+        _csvPath = "pomodoro.json";
     }
 
     public void SaveEntry(PomodoroEntry pomodoroEntry)
@@ -27,18 +28,41 @@ public class PomodoroService
             return;
         }
 
-        string line = "test,test,test,test,test,test"; // Default line in case of error
+        var entries = new List<PomodoroEntry>();
+        if (File.Exists(_csvPath))
+        {
+            var existingJson = File.ReadAllText(_csvPath, Encoding.UTF8);
+            if (string.IsNullOrEmpty(existingJson) || existingJson.Trim() == "")
+            {
+                // If the file is empty or contains only an empty array, initialize entries as an empty list
+                Console.WriteLine("Warning: The existing JSON content is null or empty.");
+                existingJson = "[]"; // Initialize with an empty JSON array
+                entries = new List<PomodoroEntry>();
+            }
+            else if (existingJson.Trim() == "{}")
+            {
+                Console.WriteLine("Warning: The existing JSON content is null or empty.");
+                existingJson = "[]"; // Initialize with an empty JSON array
+                entries = new List<PomodoroEntry>();
+            }
+            else
+            {
+                entries = Newtonsoft.Json.JsonConvert.DeserializeObject<List<PomodoroEntry>>(existingJson);
+            }
+            
+        }
+
+        entries.Add(entry);
+
         try
         {
-            var startTime = DateTime.Parse(entry.StartTime, CultureInfo.InvariantCulture).ToString("yyyy-MM-dd HH:mm:ss");
-            var endTime = DateTime.Parse(entry.EndTime, CultureInfo.InvariantCulture).ToString("yyyy-MM-dd HH:mm:ss");
-            line = $"{entry.Daily15MinLogId},{startTime},{endTime},{entry.Description.Replace(",", ";")}";
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(entries, Newtonsoft.Json.Formatting.Indented);
+            File.WriteAllText(_csvPath, json, Encoding.UTF8);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error creating file: {ex.Message}");
+            Console.WriteLine($"Error saving to JSON file: {ex.Message}");
         }
-        File.AppendAllLines(_csvPath, new[] { line }, Encoding.UTF8);
     }
 
     public List<PomodoroEntry> GetAllEntries()
@@ -46,20 +70,16 @@ public class PomodoroService
         var entries = new List<PomodoroEntry>();
         if (!File.Exists(_csvPath)) return entries;
 
-        var lines = File.ReadAllLines(_csvPath);
-        foreach (var line in lines)
+        try
         {
-            var parts = line.Split(',');
-            if (parts.Length < 4) continue;
-
-            entries.Add(new PomodoroEntry
-            {
-                Daily15MinLogId = parts[0],
-                StartTime = parts[1],
-                EndTime = parts[2],
-                Description = parts[3]
-            });
+            var json = File.ReadAllText(_csvPath, Encoding.UTF8);
+            entries = Newtonsoft.Json.JsonConvert.DeserializeObject<List<PomodoroEntry>>(json) ?? new List<PomodoroEntry>();
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reading JSON file: {ex.Message}");
+        }
+
         return entries;
     }
 }
