@@ -10,7 +10,7 @@ public class Daily15MinLogService
     public async Task<List<DailyLog15Min>> GetDaily15MinLogAsyncForYear2025()
     {
         List<DailyLog15Min> lstDailyLog15Min = new List<DailyLog15Min>();
-        var temp = (new Daily15MinLogService()).GetDaily15MinLogAsync().Result;
+        var temp = await (new Daily15MinLogService()).GetDaily15MinLogAsync();
 
         lstDailyLog15Min = temp.Where(log => log.dtActivity.Year == 2025).ToList();
         return lstDailyLog15Min;
@@ -26,7 +26,7 @@ public class Daily15MinLogService
         var temp = await GetAll15MinLogs(dataSet.Tables[0]);
         lstDailyLog15Min.AddRange(temp.ToList());
         temp = null;
-        int sheetIndex = 0;
+        // Removed unused variable 'sheetIndex'
         temp = await GetAll15MinLogs(dataSet.Tables[1]);
         lstDailyLog15Min.AddRange(temp.ToList());
         temp = null;

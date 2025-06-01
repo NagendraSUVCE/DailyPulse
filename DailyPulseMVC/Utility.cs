@@ -71,6 +71,7 @@ namespace Utility.Excel
                     { "-gas-", "Gas" },
                     { "-fuel-", "Fuel" },
                     { "-storage-", "Storage" },
+                    { "-clothes-", "Clothes" },
                     { "-other-", "Other" }
                 };
 
@@ -100,18 +101,22 @@ namespace Utility.Excel
 
                 if (expensesCustom.Daily15MinLogId.ToLower().Contains("-taazakitchen-"))
                     expensesCustom.ExpenseVendor = "TaazaKitchen";
+                else if (expensesCustom.Daily15MinLogId.ToLower().Contains("-coffeethindi-"))
+                    expensesCustom.ExpenseVendor = "CoffeeThindi";
                 else if (expensesCustom.Daily15MinLogId.ToLower().Contains("-swiggy-"))
                     expensesCustom.ExpenseVendor = "Swiggy";
                 else if (expensesCustom.Daily15MinLogId.ToLower().Contains("rapido"))
                     expensesCustom.ExpenseVendor = "Rapido";
                 else if (expensesCustom.Daily15MinLogId.ToLower().Contains("nammayatri"))
                     expensesCustom.ExpenseVendor = "NammaYatri";
+                else if (expensesCustom.Daily15MinLogId.ToLower().Contains("nammametro"))
+                    expensesCustom.ExpenseVendor = "NammaMetro";
+                else if (expensesCustom.Daily15MinLogId.ToLower().Contains("-auto-"))
+                    expensesCustom.ExpenseVendor = "Auto";
                 else if (expensesCustom.Daily15MinLogId.ToLower().Contains("akshayakalpa"))
                     expensesCustom.ExpenseVendor = "AkshayaKalpa";
                 else if (expensesCustom.Daily15MinLogId.ToLower().Contains("hydmetro"))
                     expensesCustom.ExpenseVendor = "HydMetro";
-                else if (expensesCustom.Daily15MinLogId.ToLower().Contains("CreatingLinks"))
-                    expensesCustom.ExpenseVendor = "CreatingLinks";
 
 
                 if (expensesCustom.Daily15MinLogId.ToLower().EndsWith("rs"))

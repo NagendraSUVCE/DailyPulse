@@ -47,7 +47,7 @@ public class BankStatementService
         List<BankStmt> lstBankStmt = new List<BankStmt>();
         foreach (DataRow bankStmtRow in bankStmtTable.Rows)
         {
-            string colValue = bankStmtRow[SlNo].ToString();
+            string colValue = bankStmtRow[SlNo]?.ToString() ?? string.Empty;
             if (colValue.Contains("S No."))
             {
                 foundTxn = true;
@@ -73,36 +73,39 @@ public class BankStatementService
     }
     public async Task<List<BankStmt>> GetBankDetailsICICI()
     {
-        List<BankStmt> lstBankStatements = new List<BankStmt>();
-        try
+        return await Task.Run(() =>
         {
-            //string baseFolder = @"E:\OneDrive - Krishna\Nagendra\all Salary\Bank statements\ICICI\";
-            var baseFolder = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/all Salary/Bank statements/ICICI/";
-
-            List<string> strLinks = new List<string>();
-            /*strLinks.Add(baseFolder + @"ICICI 2013 OpTransactionHistory2013.xls");
-            strLinks.Add(baseFolder + @"ICICI 2014 OpTransactionHistory2014.xls");
-            strLinks.Add(baseFolder + @"ICICI 2015 OpTransactionHistory2015.xls");
-            strLinks.Add(baseFolder + @"ICICI 2016 OpTransactionHistory2016.xls");
-            strLinks.Add(baseFolder + @"ICICI 2017 01 03 Jan To Mar OpTransactionHistory14-06-2021.xls");
-            strLinks.Add(baseFolder + @"ICICI 2017 2018 OpTransactionHistory14-06-2021.xls");
-            strLinks.Add(baseFolder + @"ICICI 2018 2019 OpTransactionHistory30-05-2019.xls");
-            strLinks.Add(baseFolder + @"ICICI 2019 2020 OpTransactionHistory09-11-2020.xls");
-            strLinks.Add(baseFolder + @"ICICI 2020 2021 OpTransactionHistory14-06-2021.xls");
-            strLinks.Add(baseFolder + @"ICICI 2021 2022 OpTransactionHistoryTpr16-12-2022.xls");
-            strLinks.Add(baseFolder + @"ICICI 2022 2023 OpTransactionHistoryTpr Downloaded 27 jan 2024.xls"); */
-            strLinks.Add(baseFolder + @"ICICI 2023 2024 OpTransactionHistoryTpr04-01-2025 Full year.xls");
-            foreach (var strlink in strLinks)
+            List<BankStmt> lstBankStatements = new List<BankStmt>();
+            try
             {
-                lstBankStatements.AddRange(GetStatementFromICICI(strlink));
-            }
-        }
-        catch (Exception ex)
-        {
+                //string baseFolder = @"E:\OneDrive - Krishna\Nagendra\all Salary\Bank statements\ICICI\";
+                var baseFolder = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/all Salary/Bank statements/ICICI/";
 
-            throw;
-        }
-        return lstBankStatements;
+                List<string> strLinks = new List<string>();
+                /*strLinks.Add(baseFolder + @"ICICI 2013 OpTransactionHistory2013.xls");
+                strLinks.Add(baseFolder + @"ICICI 2014 OpTransactionHistory2014.xls");
+                strLinks.Add(baseFolder + @"ICICI 2015 OpTransactionHistory2015.xls");
+                strLinks.Add(baseFolder + @"ICICI 2016 OpTransactionHistory2016.xls");
+                strLinks.Add(baseFolder + @"ICICI 2017 01 03 Jan To Mar OpTransactionHistory14-06-2021.xls");
+                strLinks.Add(baseFolder + @"ICICI 2017 2018 OpTransactionHistory14-06-2021.xls");
+                strLinks.Add(baseFolder + @"ICICI 2018 2019 OpTransactionHistory30-05-2019.xls");
+                strLinks.Add(baseFolder + @"ICICI 2019 2020 OpTransactionHistory09-11-2020.xls");
+                strLinks.Add(baseFolder + @"ICICI 2020 2021 OpTransactionHistory14-06-2021.xls");
+                strLinks.Add(baseFolder + @"ICICI 2021 2022 OpTransactionHistoryTpr16-12-2022.xls");
+                strLinks.Add(baseFolder + @"ICICI 2022 2023 OpTransactionHistoryTpr Downloaded 27 jan 2024.xls"); */
+                strLinks.Add(baseFolder + @"ICICI 2023 2024 OpTransactionHistoryTpr04-01-2025 Full year.xls");
+                foreach (var strlink in strLinks)
+                {
+                    lstBankStatements.AddRange(GetStatementFromICICI(strlink));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                throw;
+            }
+            return lstBankStatements;
+        });
     }
 
     public async Task<DataTable> ReconcileBankStatementsWithExpenses()

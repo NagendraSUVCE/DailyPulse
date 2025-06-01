@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Data;
 using System.Diagnostics;
 using DailyPulseMVC.Models;
-using DailyPulseMVC.Models;
 
 namespace DailyPulseMVC.Controllers;
 
@@ -18,7 +17,7 @@ public class HomeController : Controller
     
     public async Task<IActionResult> Index()
     {
-        var lstDailyLog15Min = (new Daily15MinLogService()).GetDaily15MinLogAsyncForYear2025().Result;
+        var lstDailyLog15Min = await (new Daily15MinLogService()).GetDaily15MinLogAsyncForYear2025();
         return View(lstDailyLog15Min);
     }
 
@@ -42,7 +41,7 @@ public class HomeController : Controller
 
     public async Task<IActionResult> ExpensesPending()
     {
-        var lstDailyLog15MinExpensesPending = (new ExpensesService()).GetAllExpensesLogPending().Result;
+        var lstDailyLog15MinExpensesPending = await (new ExpensesService()).GetAllExpensesLogPending();
         return View("Index", lstDailyLog15MinExpensesPending);
     }
     

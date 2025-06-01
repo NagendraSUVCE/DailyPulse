@@ -4,5 +4,17 @@
     "StartTime": "2025-05-30 00:20:33",
     "EndTime": "2025-05-30 00:20:40",
     "Description": "yuiop"
+  },
+  {
+    "Daily15MinLogId": "SelfMisc-GetReady-GotToLalbhag",
+    "StartTime": "2025-05-31 13:45:35",
+    "EndTime": "2025-05-31 14:10:35",
+    "Description": "Getting ready to go to lalbhag for halasu and maavu mela"
+  },
+  {
+    "Daily15MinLogId": "SelfTech-Pluralsight-AWS-CloudPractioner-CLFC02-10-AuditingMonitoringLogging-101Minutes",
+    "StartTime": "2025-05-31 20:40:16",
+    "EndTime": "2025-05-31 21:05:16",
+    "Description": "Understanding Auditing on AWS\n05:57\nIdentifying Business and End User Services\n02:38\nAuditing, Monitoring, and Logging Exam Tips\n05:23\nAuditing, Monitoring, Logging, and Additional Technology and Services Quiz\n15:00\n"
   }
 ]
