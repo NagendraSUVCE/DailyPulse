@@ -204,15 +204,39 @@ public class Daily15MinLogService
             averageHoursTable.Rows.Add(row);
         }
         DataTable past30DaysTable = Past14DaysData(lstDailyLog15Min, categories);
-        DataTable categoriesTotalHrsEachDay = GetSummaryForEachDay(lstDailyLog15Min, categories);
+        List<DailyLogSummaryForEachDay> lstDailyLogSummaryForEachDay = GetSummaryForEachDay(lstDailyLog15Min, categories);
+        // Convert the summary list to a DataTable
+        DataTable categoriesTotalHrsEachDay = DataTableConverter.ToDataTable(lstDailyLogSummaryForEachDay);
 
+        var targets = new Dictionary<string, decimal>
+{
+    { "SelfCode", 0.25m },
+            { "SelfTech", 0.34m },
+    { "SelfHelp", 0.50m },
+    { "SelfSong", 0.25m }
+};
+
+        List<StreakResult> streakResults = StreakAnalyzer.AnalyzeStreaks(lstDailyLogSummaryForEachDay, targets);
+
+        foreach (var result in streakResults)
+        {
+            Console.WriteLine($"You met continuous target of {targets[result.Category]} for {result.StreakDays} days " +
+                              $"starting from {result.EndDate:dd MMM yyyy} till {result.StartDate:dd MMM yyyy} " +
+                              $"and you need {result.RequiredToday:F2} today to increase streak to {result.StreakDays + 1} days.");
+        }
+
+        DataTable streakResultsDatatable = DataTableConverter.ToDataTable(streakResults);
+        DataTableConverter.DataTableToCsv(streakResultsDatatable
+        , @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/SelfCode/DatabaseInCSV/"
+        , "StreakResults.csv", false);
         // Add both tables to the DataSet
         var dsNew = new DataSet();
         // Add the past 30 days table to the DataSet
         dsNew.Tables.Add(past30DaysTable);
+        dsNew.Tables.Add(streakResultsDatatable);
         dsNew.Tables.Add(averageHoursTable);
         dsNew.Tables.Add(totalHoursTable);
-        dsNew.Tables.Add(categoriesTotalHrsEachDay);
+        // dsNew.Tables.Add(categoriesTotalHrsEachDay);
 
 
         return dsNew;
@@ -260,22 +284,18 @@ public class Daily15MinLogService
         return past30DaysTable;
     }
 
-    private static DataTable GetSummaryForEachDay(List<DailyLog15Min> lstDailyLog15Min, string[] categories)
+    private static List<DailyLogSummaryForEachDay> GetSummaryForEachDay(List<DailyLog15Min> lstDailyLog15Min, string[] categories)
     {
-        DataTable dtSummary = new DataTable("Summary");
-        dtSummary.Columns.Add("Date", typeof(DateTime));
-        dtSummary.Columns.Add("Category", typeof(string));
-        dtSummary.Columns.Add("TotalHrs", typeof(decimal));
-        dtSummary.Columns.Add("Target", typeof(decimal)); // Add target column
+        List<DailyLogSummaryForEachDay> summaryList = new List<DailyLogSummaryForEachDay>();
 
         // Group data by date and category for faster lookup
         var groupedData = lstDailyLog15Min
             .GroupBy(log => new { log.dtActivity.Date, log.category })
             .Select(g => new
             {
-            Date = g.Key.Date,
-            Category = g.Key.category,
-            TotalHrs = g.Sum(log => log.Hrs)
+                Date = g.Key.Date,
+                Category = g.Key.category,
+                TotalHrs = g.Sum(log => log.Hrs)
             })
             .ToDictionary(g => new { g.Date, g.Category }, g => g.TotalHrs);
 
@@ -285,26 +305,26 @@ public class Daily15MinLogService
 
         // Generate all dates in the range
         var allDates = Enumerable.Range(0, (endDate - startDate).Days + 1)
-              .Select(offset => startDate.AddDays(offset))
-              .ToList();
+            .Select(offset => startDate.AddDays(offset))
+            .ToList();
 
-        // Populate the summary table
+        // Populate the summary list
         foreach (var date in allDates)
         {
             foreach (var category in categories)
             {
-            var key = new { Date = date, Category = category };
-            var totalHrs = groupedData.TryGetValue(key, out var hrs) ? hrs : 0;
+                var key = new { Date = date, Category = category };
+                var totalHrs = groupedData.TryGetValue(key, out var hrs) ? hrs : 0;
 
-            DataRow row = dtSummary.NewRow();
-            row["Date"] = date;
-            row["Category"] = category;
-            row["TotalHrs"] = totalHrs;
-            row["Target"] = 0.25m; // Set target value
-            dtSummary.Rows.Add(row);
+                summaryList.Add(new DailyLogSummaryForEachDay
+                {
+                    ActivityDate = date,
+                    Category = category,
+                    TotalHrs = totalHrs
+                });
             }
         }
 
-        return dtSummary;
+        return summaryList;
     }
 }

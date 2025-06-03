@@ -17,4 +17,22 @@ namespace Models.DailyLog
         public string? activityIndex { get; set; }
         public decimal Hrs { get; set; }
     }
+
+    public class DailyLogSummaryForEachDay
+    {
+        public DateTime ActivityDate { get; set; }
+        public string? Category { get; set; }
+        public decimal TotalHrs { get; set; }
+    }
+
+    public class StreakResult
+    {
+        public DateTime AnalyzeDate { get; set; }
+        public string Category { get; set; }
+        public decimal Target { get; set; }
+        public int StreakDays { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public decimal RequiredToday { get; set; }
+    }
 }
