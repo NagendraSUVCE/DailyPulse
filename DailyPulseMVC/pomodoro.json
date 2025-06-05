@@ -46,5 +46,41 @@
     "StartTime": "2025-06-03 22:29:29",
     "EndTime": "2025-06-03 22:54:29",
     "Description": "SelfTech-Pluralsight-AWS-CloudPractioner-CLFC02-12-PricingBillingSupport-88Minutes"
+  },
+  {
+    "Daily15MinLogId": "Work-Documentation-Incubations-7Policy-SharadWork",
+    "StartTime": "2025-06-04 13:47:42",
+    "EndTime": "2025-06-04 14:12:42",
+    "Description": "Work-Documentation-Incubations-7Policy-SharadWork"
+  },
+  {
+    "Daily15MinLogId": "Daily-Bath",
+    "StartTime": "2025-06-04 14:37:07",
+    "EndTime": "2025-06-04 15:02:07",
+    "Description": "Daily-Bath also work\ndecided to go on monday to office"
+  },
+  {
+    "Daily15MinLogId": "Work-Analysis-Policy-CheckIncubationFilesForWork",
+    "StartTime": "2025-06-05 11:20:39",
+    "EndTime": "2025-06-05 11:45:39",
+    "Description": "Work-Analysis-Policy-CheckIncubationFilesForWork"
+  },
+  {
+    "Daily15MinLogId": "SelfMisc-FillDaily15MinLog-For3rdJune4thJune5thJune",
+    "StartTime": "2025-06-05 14:11:08",
+    "EndTime": "2025-06-05 14:36:08",
+    "Description": "SelfMisc-FillDaily15MinLog-For3rdJune4thJune5thJune"
+  },
+  {
+    "Daily15MinLogId": "SelfMisc-FillDaily15MinLog-For3rdJune4thJune5thJune",
+    "StartTime": "2025-06-05 14:47:12",
+    "EndTime": "2025-06-05 15:12:12",
+    "Description": "SelfMisc-FillDaily15MinLog-For3rdJune4thJune5thJune"
+  },
+  {
+    "Daily15MinLogId": "Daily-Bath",
+    "StartTime": "2025-06-05 15:16:24",
+    "EndTime": "2025-06-05 15:41:24",
+    "Description": "Daily-Bath"
   }
 ]
