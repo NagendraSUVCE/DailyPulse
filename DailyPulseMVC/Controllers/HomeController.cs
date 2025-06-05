@@ -14,17 +14,24 @@ public class HomeController : Controller
         _logger = logger;
     }
 
-    
+
     public async Task<IActionResult> Index()
     {
+        try
+        {
+            string connectionString = KeyVaultUtility.KeyVaultUtilityGetSecret("learningdbconnectionstring");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error retrieving connection string: {ex.Message}");
+        }
         var lstDailyLog15Min = await (new Daily15MinLogService()).GetDaily15MinLogAsyncForYear2025();
         return View(lstDailyLog15Min);
     }
 
-  public async Task<IActionResult> Common()
+    public async Task<IActionResult> Common()
     {
-        var filePath = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/all Salary/all Payslips/all Payslips Summarized.xlsx";
-        DataSet dataSet = Utility.Excel.ExcelUtilities.GetDataFromExcelNewWay(filePath);
+       DataSet dataSet = (new ExpensesService()).GetPayslipsSummarizedGraphWay().Result;
         DataTable dataTable1 = dataSet.Tables[0];
         foreach (DataTable table in dataSet.Tables)
         {
@@ -44,7 +51,13 @@ public class HomeController : Controller
         var lstDailyLog15MinExpensesPending = await (new ExpensesService()).GetAllExpensesLogPending();
         return View("Index", lstDailyLog15MinExpensesPending);
     }
-    
+
+    public async Task<IActionResult> ExpensesPendingGraph()
+    {
+        var lstDailyLog15MinExpensesPending = await (new ExpensesService()).GetPayslipsSummarizedGraphWay();
+        return View("Common", lstDailyLog15MinExpensesPending);
+    }
+
     public IActionResult AvgStreak()
     {
         DataSet dsNew = new DataSet();
@@ -52,7 +65,7 @@ public class HomeController : Controller
 
         return View("Common", dsNew);
     }
-    
+
     public IActionResult Reconciliation()
     {
         DataSet dsNew = new DataSet();
