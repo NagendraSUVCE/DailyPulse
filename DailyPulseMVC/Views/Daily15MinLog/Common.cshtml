@@ -1,0 +1,111 @@
+@model System.Data.DataSet
+
+@{
+    ViewData["Title"] = "DataSet Viewer";
+}
+
+<h2>DataSet Viewer</h2>
+
+@foreach (System.Data.DataTable table in Model.Tables)
+{
+    <h3>@table.TableName</h3>
+
+    <input type="text" id="filterInput_@table.TableName" placeholder="Filter rows..." onkeyup="filterTable('@table.TableName')" style="margin-bottom: 10px; padding: 5px; width: 300px;" />
+
+    <table id="dataTable_@table.TableName" class="table table-bordered table-striped" data-sort-order="asc">
+        <thead>
+            <tr>
+                @foreach (System.Data.DataColumn column in table.Columns)
+                {
+                    <th onclick="sortTable('@table.TableName', @table.Columns.IndexOf(column))" style="cursor: pointer;">
+                        @column.ColumnName
+                    </th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (System.Data.DataRow row in table.Rows)
+            {
+                // Extract numeric values from the row for comparison
+                var numericValues = row.ItemArray
+                    .Select(item => decimal.TryParse(item?.ToString(), out var value) ? value : (decimal?)null)
+                    .ToList();
+
+                var maxValue = numericValues.Max();
+                var minValue = numericValues.Min();
+
+                <tr>
+                    @for (int i = 0; i < row.ItemArray.Length; i++)
+                    {
+                        var item = row.ItemArray[i];
+                        <td style="
+                            @if (decimal.TryParse(item?.ToString(), out var decimalValue))
+                            {
+                                if (decimalValue == maxValue)
+                                {
+                                    @:background-color: lightgreen;
+                                }
+                                else if (decimalValue == minValue)
+                                {
+                                    @:background-color: lightcoral;
+                                }
+                            }">
+                            @{
+                                if (decimal.TryParse(item?.ToString(), out decimal decimalValue))
+                                {
+                                    @decimalValue.ToString("N2")
+                                }
+                                else if (DateTime.TryParse(item?.ToString(), out DateTime dateValue))
+                                {
+                                    @dateValue.ToShortDateString()
+                                }
+                                else
+                                {
+                                    @Html.Raw(item?.ToString())
+                                }
+                            }
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<script>
+    function sortTable(tableName, columnIndex) {
+        const table = document.getElementById("dataTable_" + tableName);
+        const rows = Array.from(table.rows).slice(1); // Exclude header row
+        const isAscending = table.getAttribute("data-sort-order") !== "asc";
+        table.setAttribute("data-sort-order", isAscending ? "asc" : "desc");
+
+        rows.sort((a, b) => {
+            const cellA = a.cells[columnIndex].innerText.trim();
+            const cellB = b.cells[columnIndex].innerText.trim();
+
+            if (!isNaN(cellA) && !isNaN(cellB)) {
+                return isAscending ? cellA - cellB : cellB - cellA;
+            }
+
+            return isAscending
+                ? cellA.localeCompare(cellB)
+                : cellB.localeCompare(cellA);
+        });
+
+        rows.forEach(row => table.tBodies[0].appendChild(row));
+    }
+
+    function filterTable(tableName) {
+        const input = document.getElementById("filterInput_" + tableName);
+        const filter = input.value.toLowerCase();
+        const table = document.getElementById("dataTable_" + tableName);
+        const rows = table.tBodies[0].rows;
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const cells = Array.from(row.cells);
+            const match = cells.some(cell => cell.innerText.toLowerCase().includes(filter));
+            row.style.display = match ? "" : "none";
+        }
+    }
+</script>

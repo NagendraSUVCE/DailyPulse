@@ -3,17 +3,40 @@ using System.Text;
 using System.IO;
 using DailyPulseMVC.Models;
 using Newtonsoft.Json;
+using System.Threading.Tasks;
 
 public class PomodoroService
 {
-    private readonly string _csvPath;
-
+    // private readonly string _csvPath;
+    private readonly string _tempFilePath;
+    private string fileName = "pomodoro.json";
+    private string folderPath = @"Nagendra/SelfCode/DatabaseInCSV";
     public PomodoroService()
     {
-        _csvPath = "pomodoro.json";
+        // _csvPath = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/SelfCode/DatabaseInCSV/pomodoro.json";
+        _tempFilePath = "temp_pomodoro.json";
+        fileName = "pomodoro_copy.json";
+        folderPath = @"Nagendra/SelfCode/DatabaseInCSV";
     }
 
-    public void SaveEntry(PomodoroEntry pomodoroEntry)
+    public List<PomodoroEntry> GetAllEntries()
+    {
+        var entries = new List<PomodoroEntry>();
+        try
+        {
+            // var json = File.ReadAllText(_csvPath, Encoding.UTF8);
+            var json = GetPomodoroDetailsFromJsonUsingGraph().Result;
+            entries = Newtonsoft.Json.JsonConvert.DeserializeObject<List<PomodoroEntry>>(json) ?? new List<PomodoroEntry>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reading JSON file: {ex.Message}");
+        }
+
+        return entries;
+    }
+
+    public async Task SaveEntry(PomodoroEntry pomodoroEntry)
     {
         var entry = pomodoroEntry;
         if (entry == null)
@@ -29,35 +52,14 @@ public class PomodoroService
         }
 
         var entries = new List<PomodoroEntry>();
-        if (File.Exists(_csvPath))
-        {
-            var existingJson = File.ReadAllText(_csvPath, Encoding.UTF8);
-            if (string.IsNullOrEmpty(existingJson) || existingJson.Trim() == "")
-            {
-                // If the file is empty or contains only an empty array, initialize entries as an empty list
-                Console.WriteLine("Warning: The existing JSON content is null or empty.");
-                existingJson = "[]"; // Initialize with an empty JSON array
-                entries = new List<PomodoroEntry>();
-            }
-            else if (existingJson.Trim() == "{}")
-            {
-                Console.WriteLine("Warning: The existing JSON content is null or empty.");
-                existingJson = "[]"; // Initialize with an empty JSON array
-                entries = new List<PomodoroEntry>();
-            }
-            else
-            {
-                entries = Newtonsoft.Json.JsonConvert.DeserializeObject<List<PomodoroEntry>>(existingJson);
-            }
-            
-        }
-
+        entries = GetAllEntries();
         entries.Add(entry);
 
         try
         {
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(entries, Newtonsoft.Json.Formatting.Indented);
-            File.WriteAllText(_csvPath, json, Encoding.UTF8);
+            File.WriteAllText(_tempFilePath, json, Encoding.UTF8);
+            await UploadDataToGraphAsync(_tempFilePath);
         }
         catch (Exception ex)
         {
@@ -65,21 +67,36 @@ public class PomodoroService
         }
     }
 
-    public List<PomodoroEntry> GetAllEntries()
+    public async Task<string> GetPomodoroDetailsFromJsonUsingGraph()
     {
-        var entries = new List<PomodoroEntry>();
-        if (!File.Exists(_csvPath)) return entries;
+
+        string fileContents = "";
 
         try
         {
-            var json = File.ReadAllText(_csvPath, Encoding.UTF8);
-            entries = Newtonsoft.Json.JsonConvert.DeserializeObject<List<PomodoroEntry>>(json) ?? new List<PomodoroEntry>();
+            await GraphFileUtility.CreateTemporaryFileInLocal(folderPath, fileName, _tempFilePath);
+            fileContents = await File.ReadAllTextAsync(_tempFilePath, Encoding.UTF8);
+
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error reading JSON file: {ex.Message}");
+            throw;
         }
+        return fileContents;
+    }
 
-        return entries;
+    public async Task UploadDataToGraphAsync(string filePath)
+    {
+        var fileName = "pomodoro_copy.json";
+        var folderPath = @"Nagendra/SelfCode/DatabaseInCSV";
+        string fileContents = "";
+        try
+        {
+            await GraphFileUtility.UploadFile(folderPath, fileName, _tempFilePath);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error uploading data to Graph: {ex.Message}");
+        }
     }
 }

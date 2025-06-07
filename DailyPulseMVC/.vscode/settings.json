@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/6a733d98-c87a-49b1-91ed-418b37a57f4e/resourceGroups/dailypulse-rg/providers/Microsoft.Web/sites/dailypulse",
+    "appService.deploySubpath": "bin/Publish"
+}

@@ -5,12 +5,12 @@ using DailyPulseMVC.Models;
 
 namespace DailyPulseMVC.Controllers;
 
-public class HomeController : Controller
+public class Daily15MinLogController : Controller
 {
     // dotnet publish -c Release -o ./bin/Publish
-    private readonly ILogger<HomeController> _logger;
+    private readonly ILogger<Daily15MinLogController> _logger;
 
-    public HomeController(ILogger<HomeController> logger)
+    public Daily15MinLogController(ILogger<Daily15MinLogController> logger)
     {
         _logger = logger;
     }
@@ -39,16 +39,12 @@ public class HomeController : Controller
         return await Task.FromResult(View(dsNew));
     }
 
-    public async Task<IActionResult> ExpensesPending()
+    public IActionResult AvgStreak()
     {
-        var lstDailyLog15MinExpensesPending = await (new ExpensesService()).GetAllExpensesLogPending();
-        return View("Index", lstDailyLog15MinExpensesPending);
-    }
+        DataSet dsNew = new DataSet();
+        dsNew = (new Daily15MinLogService()).AvgStreak().Result;
 
-    public async Task<IActionResult> ExpensesPendingGraph()
-    {
-        var lstDailyLog15MinExpensesPending = await (new ExpensesService()).GetPayslipsSummarizedGraphWay();
-        return View("Common", lstDailyLog15MinExpensesPending);
+        return View("Common", dsNew);
     }
 
     public IActionResult Reconciliation()

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Data;
 using System.Diagnostics;
 using DailyPulseMVC.Models;
+using System.Threading.Tasks;
 
 namespace DailyPulseMVC.Controllers;
 public class PomodoroController : Controller
@@ -15,9 +16,9 @@ public class PomodoroController : Controller
     }
 
     [HttpPost]
-    public JsonResult Save([FromBody] PomodoroEntry entry)
+    public async Task<JsonResult> Save([FromBody] PomodoroEntry entry)
     {
-        _service.SaveEntry(entry);
+        await _service.SaveEntry(entry);
         return Json(new { success = true });
     }
 }

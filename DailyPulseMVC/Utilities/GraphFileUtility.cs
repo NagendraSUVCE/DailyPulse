@@ -149,4 +149,76 @@ public static class GraphFileUtility
         return ds;
     }
 
+ public static async Task UploadFile(string folderPathInput, string fileNameInput, string tempFileName)
+    {
+        System.Data.DataSet ds = null;
+        var filePath = tempFileName; // "timesheetbyte.xlsx";
+        var fileName = fileNameInput; //  "15-Min-Timesheet-168-Hours v2.xlsx";
+        var folderPath = folderPathInput;// "Nagendra/000 Frequent";
+
+        try
+        {
+            GraphServiceClient graphServiceClient = GraphFileUtility.GetGraphClientWithClientSecretCredential();
+            var driveItems = await graphServiceClient.Users["nagadmin@nagendrastorage.onmicrosoft.com"]
+                   .Drives.GetAsync(conf =>
+                   {
+                       conf.QueryParameters.Expand = new[] { "root" };
+                   });
+            var driveId = "b!vjzdZlwNN0qGLjDC3N_egwrus8LrtqVLj_Sc6rRDa5eI5dQJCxBNSodg9w_KLj6V";
+            // Get the drive item (timesheet.xlsx)
+            var driveItemExample = await graphServiceClient
+                .Drives[driveId]
+                .Root
+                .ItemWithPath(folderPath)
+                .Children
+                .GetAsync();
+
+            bool fileExists = false;
+            string existingFileId = null;
+
+            foreach (var itemChild in driveItemExample.Value)
+            {
+                if (itemChild.Name.Equals(fileName, StringComparison.OrdinalIgnoreCase))
+                {
+                    fileExists = true;
+                    existingFileId = itemChild.Id;
+                    break;
+                }
+            }
+
+            if (fileExists)
+            {
+                // Append data to the existing file
+                using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                {
+                    await graphServiceClient
+                        .Drives[driveId]
+                        .Items[existingFileId]
+                        .Content
+                        .PutAsync(fileStream);
+                }
+            }
+            else
+            {
+                // Create a new file and upload data
+                using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                {
+                    await graphServiceClient
+                        .Drives[driveId]
+                        .Root
+                        .ItemWithPath($"{folderPath}/{fileName}")
+                        .Content
+                        .PutAsync(fileStream);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+
+            throw;
+        }
+
+    }
+
+
 }
