@@ -262,6 +262,7 @@ public class Daily15MinLogService
         var dsNew = new DataSet();
         // Add the past 30 days table to the DataSet
         dsNew.Tables.Add(past30DaysTable);
+        dsNew.Tables.Add((new LogSummaryService().GetCategoryWeeklySummary(lstDailyLogSummaryForEachDay)));
         dsNew.Tables.Add(streakResultsDatatable);
         dsNew.Tables.Add(averageHoursTable);
         dsNew.Tables.Add(totalHoursTable);

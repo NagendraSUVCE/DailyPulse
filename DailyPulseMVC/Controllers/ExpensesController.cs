@@ -5,30 +5,34 @@ using DailyPulseMVC.Models;
 
 namespace DailyPulseMVC.Controllers;
 
-public class HomeController : Controller
+public class ExpensesController : Controller
 {
     // dotnet publish -c Release -o ./bin/Publish
-    private readonly ILogger<HomeController> _logger;
+    private readonly ILogger<ExpensesController> _logger;
 
-    public HomeController(ILogger<HomeController> logger)
+    public ExpensesController(ILogger<ExpensesController> logger)
     {
         _logger = logger;
     }
 
-
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Common()
     {
-        var lstDailyLog15Min = await (new Daily15MinLogService()).GetDaily15MinLogAsyncForYear2025();
-        return View(lstDailyLog15Min);
+       DataSet dataSet = (new ExpensesService()).GetPayslipsSummarizedGraphWay().Result;
+        DataTable dataTable1 = dataSet.Tables[0];
+        foreach (DataTable table in dataSet.Tables)
+        {
+            if (table.TableName == "Expenses2022")
+            {
+                dataTable1 = table;
+                break;
+            }
+        }
+        DataSet dsNew = new DataSet();
+        dsNew.Tables.Add(dataTable1.Copy());
+        return await Task.FromResult(View(dsNew));
     }
 
-    public async Task<IActionResult> ExpensesPending()
-    {
-        var lstDailyLog15MinExpensesPending = await (new ExpensesService()).GetAllExpensesLogPending();
-        return View("Index", lstDailyLog15MinExpensesPending);
-    }
-
-/*    public async Task<IActionResult> ExpensesPendingGraph()
+    public async Task<IActionResult> ExpensesPendingGraph()
     {
         var lstDailyLog15MinExpensesPending = await (new ExpensesService()).GetPayslipsSummarizedGraphWay();
         return View("Common", lstDailyLog15MinExpensesPending);
@@ -41,7 +45,7 @@ public class HomeController : Controller
         dsNew.Tables.Add(dt);
 
         return View("Common", dsNew);
-    }*/
+    }
 
     public IActionResult Privacy()
     {
