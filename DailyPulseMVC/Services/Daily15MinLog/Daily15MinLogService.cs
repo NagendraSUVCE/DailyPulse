@@ -7,25 +7,25 @@ public class Daily15MinLogService
     {
     }
 
-        public async Task<System.Data.DataSet> GetDaily15MinLogFromGraphExcel()
+    public async Task<System.Data.DataSet> GetDaily15MinLogFromGraphExcel()
+    {
+        var tempFilePath = "timesheetbyte.xlsx";
+        var fileName = "15-Min-Timesheet-168-Hours v2.xlsx";
+        var folderPath = "Nagendra/000 Frequent";
+        System.Data.DataSet ds = null;
+        List<DailyLog15Min> lstDailyLog15Min = new List<DailyLog15Min>();
+        try
         {
-            var tempFilePath = "timesheetbyte.xlsx";
-            var fileName = "15-Min-Timesheet-168-Hours v2.xlsx";
-            var folderPath = "Nagendra/000 Frequent";
-            System.Data.DataSet ds = null;
-            List<DailyLog15Min> lstDailyLog15Min = new List<DailyLog15Min>();
-            try
-            {
-                await GraphFileUtility.CreateTemporaryFileInLocal(folderPath, fileName, tempFilePath);
-                ds = GraphFileUtility.GetDataFromExcelNewWay(tempFilePath);
-            }
-            catch (Exception ex)
-            {
-                // https://learn.microsoft.com/en-us/answers/questions/1191723/problem-extract-data-using-microsoft-graph-c-net
-                throw;
-            }
-            return ds;
+            await GraphFileUtility.CreateTemporaryFileInLocal(folderPath, fileName, tempFilePath);
+            ds = GraphFileUtility.GetDataFromExcelNewWay(tempFilePath);
         }
+        catch (Exception ex)
+        {
+            // https://learn.microsoft.com/en-us/answers/questions/1191723/problem-extract-data-using-microsoft-graph-c-net
+            throw;
+        }
+        return ds;
+    }
     public async Task<List<DailyLog15Min>> GetDaily15MinLogAsyncForYear2025()
     {
         List<DailyLog15Min> lstDailyLog15Min = new List<DailyLog15Min>();
@@ -36,14 +36,24 @@ public class Daily15MinLogService
     }
     public async Task<List<DailyLog15Min>> GetDaily15MinLogAsync()
     {
-        // var filePath = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/000 Frequent/15-Min-Timesheet-168-Hours v2.xlsx";
-        // DataSet dataSet = Utility.Excel.ExcelUtilities.GetDataFromExcelNewWay(filePath);
-       
-        DataSet dataSet = await GetDaily15MinLogFromGraphExcel();
-        if (dataSet == null || dataSet.Tables.Count < 7)
+        DataSet dataSet = null;
+        try
         {
-            throw new Exception("DataSet is null or does not contain enough tables.");
+            dataSet = await GetDaily15MinLogFromGraphExcel();
+            if (dataSet == null || dataSet.Tables.Count < 7)
+            {
+                throw new Exception("DataSet is null or does not contain enough tables.");
+            }
         }
+        catch (Exception ex)
+        {
+            var filePath = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/000 Frequent/15-Min-Timesheet-168-Hours v2.xlsx";
+            dataSet = Utility.Excel.ExcelUtilities.GetDataFromExcelNewWay(filePath);
+
+        }
+        //return dataSet;
+
+
 
         DateTime dtDateOfActivity = new DateTime(2000, 01, 01);
         List<DailyLog15Min> lstDailyLog15Min = new List<DailyLog15Min>();
@@ -152,7 +162,7 @@ public class Daily15MinLogService
 
     public async Task<DataSet> AvgStreak()
     {
-        
+
         DataSet dataSet = await GetDaily15MinLogFromGraphExcel();
         if (dataSet == null || dataSet.Tables.Count < 7)
         {
@@ -262,6 +272,12 @@ public class Daily15MinLogService
         var dsNew = new DataSet();
         // Add the past 30 days table to the DataSet
         dsNew.Tables.Add(past30DaysTable);
+
+        var dayRanges = new List<int> { 7, 30, 90, 365 };
+
+        DataTable summaryTable = new LogSummaryService().GetCategorySummary(lstDailyLogSummaryForEachDay, dayRanges);
+
+        dsNew.Tables.Add(summaryTable);
         dsNew.Tables.Add((new LogSummaryService().GetCategoryWeeklySummary(lstDailyLogSummaryForEachDay)));
         dsNew.Tables.Add(streakResultsDatatable);
         dsNew.Tables.Add(averageHoursTable);

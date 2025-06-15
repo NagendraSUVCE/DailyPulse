@@ -7,6 +7,54 @@ using Models.DailyLog;
 
 public class LogSummaryService
 {
+    public DataTable GetCategorySummary(List<DailyLogSummaryForEachDay> logs, List<int> dayRanges)
+    {
+        DataTable table = new DataTable();
+        table.Columns.Add("CategoryName", typeof(string));
+        table.Columns.Add("Conclusion", typeof(string));
+        table.Columns.Add("DaysRange", typeof(int));
+        table.Columns.Add("PercentageChange", typeof(decimal));
+
+        DateTime today = DateTime.Today;
+
+        var categories = logs.Select(l => l.Category).Distinct();
+
+        foreach (var category in categories)
+        {
+            var categoryLogs = logs.Where(l => l.Category == category).ToList();
+
+            if (!categoryLogs.Any())
+                continue;
+
+            var totalDays = (decimal)(today - categoryLogs.Min(l => l.ActivityDate)).TotalDays + 1;
+            var overallDailyAverage = categoryLogs.Sum(l => l.TotalHrs) / totalDays;
+
+            foreach (var range in dayRanges)
+            {
+                DateTime rangeStart = today.AddDays(-range);
+                DateTime rangeEnd = today.AddDays(-1); // exclude today
+
+                var rangeLogs = categoryLogs
+                    .Where(l => l.ActivityDate >= rangeStart && l.ActivityDate <= rangeEnd)
+                    .ToList();
+
+                decimal rangeAverage = rangeLogs.Sum(l => l.TotalHrs);// range;
+
+                decimal overallRangeAverage = overallDailyAverage * range;
+
+                decimal percentageChange = overallRangeAverage == 0 ? 0 :
+                    ((rangeAverage - overallRangeAverage) / overallRangeAverage) * 100;
+
+                string trend = percentageChange > 0 ? "higher" : "lower";
+
+                string conclusion = $"Last {range} day average for {category} is {rangeAverage:F2} and it is {Math.Abs(percentageChange):F0}% {trend} than overall {range}-day average of {overallRangeAverage:F2}";
+
+                table.Rows.Add(category, conclusion, range, percentageChange);
+            }
+        }
+
+        return table;
+    }
     public DataTable GetCategoryWeeklySummary(List<DailyLogSummaryForEachDay> logs)
     {
         DataTable table = new DataTable();
