@@ -89,7 +89,7 @@
 			let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
 			let seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-            display.textContent = `distance : ${distance} Time Left: ${minutes}:${seconds < 10 ? "0" : ""}${seconds} | Current Time: ${istCurrentTime.toISOString().slice(0, 19).replace("T", " ")} | End Time: ${istEndTime.toISOString().slice(0, 19).replace("T", " ")}`;
+            display.textContent = `Time Left: ${minutes}:${seconds < 10 ? "0" : ""}${seconds} | Current Time: ${istCurrentTime.toISOString().slice(0, 19).replace("T", " ")} | End Time: ${istEndTime.toISOString().slice(0, 19).replace("T", " ")}`;
             document.title = display.textContent;
             if (distance < 0) {
                 clearInterval(timer);

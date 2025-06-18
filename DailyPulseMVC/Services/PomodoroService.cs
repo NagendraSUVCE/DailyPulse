@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 
 public class PomodoroService
 {
-    // private readonly string _csvPath;
+     private readonly string _csvPath;
     private readonly string _tempFilePath;
     private string fileName = "pomodoro.json";
     private string folderPath = @"Nagendra/SelfCode/DatabaseInCSV";
     public PomodoroService()
     {
-        // _csvPath = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/SelfCode/DatabaseInCSV/pomodoro.json";
+        _csvPath = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/SelfCode/DatabaseInCSV/pomodoro.json";
         _tempFilePath = "temp_pomodoro.json";
         fileName = "pomodoro_copy.json";
         folderPath = @"Nagendra/SelfCode/DatabaseInCSV";
@@ -24,8 +24,8 @@ public class PomodoroService
         var entries = new List<PomodoroEntry>();
         try
         {
-            // var json = File.ReadAllText(_csvPath, Encoding.UTF8);
-            var json = GetPomodoroDetailsFromJsonUsingGraph().Result;
+             var json = File.ReadAllText(_csvPath, Encoding.UTF8);
+            // var json = GetPomodoroDetailsFromJsonUsingGraph().Result;
             entries = Newtonsoft.Json.JsonConvert.DeserializeObject<List<PomodoroEntry>>(json) ?? new List<PomodoroEntry>();
         }
         catch (Exception ex)
@@ -58,8 +58,9 @@ public class PomodoroService
         try
         {
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(entries, Newtonsoft.Json.Formatting.Indented);
-            File.WriteAllText(_tempFilePath, json, Encoding.UTF8);
-            await UploadDataToGraphAsync(_tempFilePath);
+            // ßFile.WriteAllText(_tempFilePath, json, Encoding.UTF8);
+            File.WriteAllText(_csvPath, json, Encoding.UTF8);
+            // await UploadDataToGraphAsync(_tempFilePath);
         }
         catch (Exception ex)
         {
