@@ -10,10 +10,10 @@ namespace DailyPulseMVC.Services
     {
         public class FileDetails
         {
-            public string FileName { get; set; }
+            public string? FileName { get; set; }
             public DateTime CreatedDate { get; set; }
             public DateTime LastModifiedDate { get; set; }
-            public string FullPath { get; set; }
+            public string? FullPath { get; set; }
             public long SizeInBytes { get; set; }
         }
 

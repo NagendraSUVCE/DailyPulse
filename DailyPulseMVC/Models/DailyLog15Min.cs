@@ -28,7 +28,7 @@ namespace Models.DailyLog
     public class StreakResult
     {
         public DateTime AnalyzeDate { get; set; }
-        public string Category { get; set; }
+        public string? Category { get; set; }
         public decimal Target { get; set; }
         public int StreakDays { get; set; }
         public DateTime StartDate { get; set; }

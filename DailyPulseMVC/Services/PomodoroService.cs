@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 public class PomodoroService
 {
-     private readonly string _csvPath;
+    private readonly string _csvPath;
     private readonly string _tempFilePath;
     private string fileName = "pomodoro.json";
     private string folderPath = @"Nagendra/SelfCode/DatabaseInCSV";
@@ -15,7 +15,7 @@ public class PomodoroService
     {
         _csvPath = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/SelfCode/DatabaseInCSV/pomodoro.json";
         _tempFilePath = "temp_pomodoro.json";
-        fileName = "pomodoro_copy.json";
+        fileName = "pomodoro.json";
         folderPath = @"Nagendra/SelfCode/DatabaseInCSV";
     }
 
@@ -24,13 +24,14 @@ public class PomodoroService
         var entries = new List<PomodoroEntry>();
         try
         {
-             var json = File.ReadAllText(_csvPath, Encoding.UTF8);
-            // var json = GetPomodoroDetailsFromJsonUsingGraph().Result;
-            entries = Newtonsoft.Json.JsonConvert.DeserializeObject<List<PomodoroEntry>>(json) ?? new List<PomodoroEntry>();
+            string jsonFromGraph = GetPomodoroDetailsFromJsonUsingGraph().Result;
+            entries = Newtonsoft.Json.JsonConvert.DeserializeObject<List<PomodoroEntry>>(jsonFromGraph) ?? new List<PomodoroEntry>();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error reading JSON file: {ex.Message}");
+            string jsonFromLocalFile = File.ReadAllText(_csvPath, Encoding.UTF8);
+            entries = Newtonsoft.Json.JsonConvert.DeserializeObject<List<PomodoroEntry>>(jsonFromLocalFile) ?? new List<PomodoroEntry>();
         }
 
         return entries;
@@ -54,30 +55,27 @@ public class PomodoroService
         var entries = new List<PomodoroEntry>();
         entries = GetAllEntries();
         entries.Add(entry);
+        var jsonFromFile = Newtonsoft.Json.JsonConvert.SerializeObject(entries, Newtonsoft.Json.Formatting.Indented);
 
         try
         {
-            var json = Newtonsoft.Json.JsonConvert.SerializeObject(entries, Newtonsoft.Json.Formatting.Indented);
-            // ßFile.WriteAllText(_tempFilePath, json, Encoding.UTF8);
-            File.WriteAllText(_csvPath, json, Encoding.UTF8);
-            // await UploadDataToGraphAsync(_tempFilePath);
+            File.WriteAllText(_tempFilePath, jsonFromFile, Encoding.UTF8);
+            UploadDataToGraphAsync(_tempFilePath).Wait();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error saving to JSON file: {ex.Message}");
+            File.WriteAllText(_csvPath, jsonFromFile, Encoding.UTF8);
         }
     }
 
     public async Task<string> GetPomodoroDetailsFromJsonUsingGraph()
     {
-
         string fileContents = "";
-
         try
         {
             await GraphFileUtility.CreateTemporaryFileInLocal(folderPath, fileName, _tempFilePath);
             fileContents = await File.ReadAllTextAsync(_tempFilePath, Encoding.UTF8);
-
         }
         catch (Exception ex)
         {
@@ -88,9 +86,6 @@ public class PomodoroService
 
     public async Task UploadDataToGraphAsync(string filePath)
     {
-        var fileName = "pomodoro_copy.json";
-        var folderPath = @"Nagendra/SelfCode/DatabaseInCSV";
-        string fileContents = "";
         try
         {
             await GraphFileUtility.UploadFile(folderPath, fileName, _tempFilePath);
@@ -98,6 +93,7 @@ public class PomodoroService
         catch (Exception ex)
         {
             Console.WriteLine($"Error uploading data to Graph: {ex.Message}");
+            throw ex;
         }
     }
 }
