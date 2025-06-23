@@ -2,12 +2,14 @@ using Microsoft.AspNetCore.Mvc;
 using System.Data;
 using System.Diagnostics;
 using DailyPulseMVC.Models;
+using YahooFinanceApi; // Added namespace for Candle type
 
 namespace DailyPulseMVC.Controllers;
 
 public class HomeController : Controller
 {
     // dotnet publish -c Release -o ./bin/Publish
+    // dotnet build /nologo /verbosity:q /property:WarningLevel=0 /clp:ErrorsOnly
     private readonly ILogger<HomeController> _logger;
 
     public HomeController(ILogger<HomeController> logger)
@@ -18,7 +20,39 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index()
     {
-        // (new YahooFinanceService()).GetHistoricalPriceGivenStock("MSFT", new DateTime(2025, 1, 1), new DateTime(2025, 7, 1)).Wait();
+        /*
+         var mailKitInitial = new MailKitClass(); // Removed as MailKitInitial is undefined
+         await mailKitInitial.MailKitInitial(DateTime.Now.Date);
+        //*/
+         // Fetch Fitbit data
+        /*
+        var symbols = new List<string> { "MSFT", "0P0000XVJQ.BO" }; // List of stock symbols
+        var periods = new List<YahooFinanceApi.Period> 
+        { 
+            YahooFinanceApi.Period.Daily, 
+            YahooFinanceApi.Period.Weekly, 
+            YahooFinanceApi.Period.Monthly 
+        }; // List of periods
+
+        var historicalData = new Dictionary<string, Dictionary<YahooFinanceApi.Period, List<Candle>>>();
+
+        foreach (var symbol in symbols)
+        {
+            var periodData = new Dictionary<YahooFinanceApi.Period, List<Candle>>();
+            foreach (var period in periods)
+            {
+            var candles = (new YahooFinanceService()).GetHistoricalPriceGivenStock(
+                symbol, 
+                new DateTime(2015, 1, 1), 
+                new DateTime(2025, 7, 1), 
+                period
+            ).Result;
+
+            periodData[period] = candles;
+            }
+            historicalData[symbol] = periodData;
+        }*/
+        
         var lstDailyLog15Min = await (new Daily15MinLogService()).GetDaily15MinLogAsyncForYear2025();
         return View(lstDailyLog15Min);
     }
