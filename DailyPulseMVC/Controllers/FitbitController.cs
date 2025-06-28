@@ -20,7 +20,7 @@ public class FitbitAuthController : Controller
         FitbitClientId = fitbitApiClient.FitbitClientId;
         FitbitClientSecret = fitbitApiClient.FitbitClientSecret;
         FitbitRedirectUri = fitbitApiClient.FitbitRedirectUri;
-        FitbitTokenFilePath = fitbitApiClient.FitbitTokenFilePath;
+        FitbitTokenFilePath = fitbitApiClient.FitbitTokenFileName;
            string scope = "activity heartrate location nutrition profile settings sleep social weight";
         string url = $"https://api.fitbit.com/oauth2/authorize?response_type=code&client_id={FitbitClientId}&redirect_uri={HttpUtility.UrlEncode(FitbitRedirectUri)}&scope={HttpUtility.UrlEncode(scope)}";
      
@@ -31,6 +31,11 @@ public class FitbitAuthController : Controller
     [HttpGet("callback")]
     public async Task<IActionResult> Callback(string code)
     {
+         FitbitApiClient fitbitApiClient = new FitbitApiClient();
+        FitbitClientId = fitbitApiClient.FitbitClientId;
+        FitbitClientSecret = fitbitApiClient.FitbitClientSecret;
+        FitbitRedirectUri = fitbitApiClient.FitbitRedirectUri;
+        FitbitTokenFilePath = fitbitApiClient.FitbitTokenFileName;
         if (string.IsNullOrEmpty(code))
             return BadRequest("Authorization code missing.");
 
@@ -47,7 +52,8 @@ public class FitbitAuthController : Controller
         var response = await client.PostAsync("https://api.fitbit.com/oauth2/token", content);
         var responseBody = await response.Content.ReadAsStringAsync();
 
-        await System.IO.File.WriteAllTextAsync(FitbitTokenFilePath, responseBody);
+        // await System.IO.File.WriteAllTextAsync(FitbitTokenFilePath, responseBody);
+         await fitbitApiClient.UploadTokenDataToGraphAsync(responseBody);
         // You can deserialize and store the tokens here
         return Content("Token Response:\n" + responseBody, "text/plain");
     }
@@ -55,6 +61,16 @@ public class FitbitAuthController : Controller
     public async Task GetStepsData()
     {
         var fitbitService = new FitbitService();
-        await fitbitService.GetAndSaveLatestStepsData();
+        List<StepsData> lstStepsData = await fitbitService.GetAndSaveLatestStepsData();
+        var last7DaysData = lstStepsData
+            .Where(data => data.DateOfActivity >= DateTime.Now.AddDays(-7))
+            .OrderByDescending(data => data.DateOfActivity)
+            .ToList();
+
+        var jsonResult = Newtonsoft.Json.JsonConvert.SerializeObject(last7DaysData);
+
+        Response.ContentType = "application/json";
+        await Response.WriteAsync(jsonResult);
+        
     }
 }

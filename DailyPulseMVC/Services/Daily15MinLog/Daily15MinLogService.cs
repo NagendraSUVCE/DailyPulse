@@ -24,6 +24,10 @@ public class Daily15MinLogService
             // https://learn.microsoft.com/en-us/answers/questions/1191723/problem-extract-data-using-microsoft-graph-c-net
             throw;
         }
+        if (File.Exists(tempFilePath))
+        {
+            File.Delete(tempFilePath);
+        }
         return ds;
     }
     public async Task<List<DailyLog15Min>> GetDaily15MinLogAsyncForYear2025()
