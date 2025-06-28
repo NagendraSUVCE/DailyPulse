@@ -21,21 +21,28 @@ public class FitbitApiClient
     public string FitbitClientId { get; set; }
     public string FitbitClientSecret { get; set; }
     public string FitbitRedirectUri { get; set; }
-    public string FitbitTokenFilePath { get; set; }
-
+    public string FitbitTokenFileName { get; set; }
+    private string _txtPath;
+    private string _tempFilePath;
+    private string folderPath ;
     public FitbitApiClient()
     {
 
         FitbitClientId = KeyVaultUtility.KeyVaultUtilityGetSecret("FitbitClientId");
         FitbitClientSecret = KeyVaultUtility.KeyVaultUtilityGetSecret("FitbitClientSecret");
         FitbitRedirectUri = "http://localhost:5278/fitbit/callback"; // Must match Fitbit app settings
-        FitbitTokenFilePath = "fitbittoken.txt"; // Path to store the access token
+
+        FitbitTokenFileName = "fitbittoken.txt"; // Path to store the access token
+        _txtPath = $@"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/SelfCode/DatabaseInCSV/Fitbit/{FitbitTokenFileName}";
+        _tempFilePath = $"temp_{FitbitTokenFileName}";
+        folderPath = @"Nagendra/SelfCode/DatabaseInCSV/Fitbit";
     }
-    
+
     public async Task<List<StepsData>> FetchWeeklyStepsAsync(DateTime startDate, DateTime endDate)
     {
         List<StepsData> stepsDataList = new List<StepsData>();
-        string tokenJson = await File.ReadAllTextAsync(FitbitTokenFilePath);
+        //string tokenJson = await File.ReadAllTextAsync(FitbitTokenFileName);
+        string tokenJson = await GetFitbitTokenFromJsonUsingGraph();
         var tokenObj = JObject.Parse(tokenJson);
         string accessToken = tokenObj["access_token"]?.ToString();
         string refreshToken = tokenObj["refresh_token"]?.ToString();
@@ -48,7 +55,7 @@ public class FitbitApiClient
             string newToken = await RefreshAccessToken(refreshToken);
             if (newToken != null)
             {
-                await File.WriteAllTextAsync(FitbitTokenFilePath, newToken);
+                await UploadTokenDataToGraphAsync(newToken);
                 var newAccessToken = JObject.Parse(newToken)["access_token"]?.ToString();
                 stepsDataList = await TryFetchSteps(newAccessToken, startDate, endDate);
             }
@@ -58,6 +65,11 @@ public class FitbitApiClient
             }
         }
 
+
+            if (File.Exists(_tempFilePath))
+            {
+                File.Delete(_tempFilePath);
+            }
         return stepsDataList;
     }
 
@@ -101,6 +113,36 @@ public class FitbitApiClient
         var response = await client.PostAsync("https://api.fitbit.com/oauth2/token", content);
 
         return response.IsSuccessStatusCode ? await response.Content.ReadAsStringAsync() : null;
+    }
+
+
+    public async Task<string> GetFitbitTokenFromJsonUsingGraph()
+    {
+        string fileContents = "";
+        try
+        {
+            await GraphFileUtility.CreateTemporaryFileInLocal(folderPath, FitbitTokenFileName, _tempFilePath);
+            fileContents = await File.ReadAllTextAsync(_tempFilePath, Encoding.UTF8);
+        }
+        catch (Exception ex)
+        {
+            throw;
+        }
+        return fileContents;
+    }
+
+    public async Task UploadTokenDataToGraphAsync(string tokenData)
+    {
+        try
+        {
+            await System.IO.File.WriteAllTextAsync(_tempFilePath, tokenData);
+            await GraphFileUtility.UploadFile(folderPath, FitbitTokenFileName, _tempFilePath);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error uploading data to Graph: {ex.Message}");
+            throw ex;
+        }
     }
 }
 

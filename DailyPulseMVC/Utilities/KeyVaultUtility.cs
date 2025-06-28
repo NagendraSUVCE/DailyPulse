@@ -6,8 +6,8 @@ using System;
 
     public static class KeyVaultUtility
     {
-        static SecretClient client = null;
-        static SecretClientOptions options = null;
+    private static SecretClient client = null;
+    private static SecretClientOptions options = null;
         public static string KeyVaultUtilityGetSecret(string key)
         {
             if (options == null)
