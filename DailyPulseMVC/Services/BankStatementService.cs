@@ -82,7 +82,8 @@ public class BankStatementService
                 var baseFolder = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/all Salary/Bank statements/ICICI/";
 
                 List<string> strLinks = new List<string>();
-                /*strLinks.Add(baseFolder + @"ICICI 2013 OpTransactionHistory2013.xls");
+                ///*
+                strLinks.Add(baseFolder + @"ICICI 2013 OpTransactionHistory2013.xls");
                 strLinks.Add(baseFolder + @"ICICI 2014 OpTransactionHistory2014.xls");
                 strLinks.Add(baseFolder + @"ICICI 2015 OpTransactionHistory2015.xls");
                 strLinks.Add(baseFolder + @"ICICI 2016 OpTransactionHistory2016.xls");
@@ -92,7 +93,7 @@ public class BankStatementService
                 strLinks.Add(baseFolder + @"ICICI 2019 2020 OpTransactionHistory09-11-2020.xls");
                 strLinks.Add(baseFolder + @"ICICI 2020 2021 OpTransactionHistory14-06-2021.xls");
                 strLinks.Add(baseFolder + @"ICICI 2021 2022 OpTransactionHistoryTpr16-12-2022.xls");
-                strLinks.Add(baseFolder + @"ICICI 2022 2023 OpTransactionHistoryTpr Downloaded 27 jan 2024.xls"); */
+                strLinks.Add(baseFolder + @"ICICI 2022 2023 OpTransactionHistoryTpr Downloaded 27 jan 2024.xls"); //*/
                 strLinks.Add(baseFolder + @"ICICI 2023 2024 OpTransactionHistoryTpr04-01-2025 Full year.xls");
                 foreach (var strlink in strLinks)
                 {
@@ -118,6 +119,7 @@ public class BankStatementService
         DataTable reconciliationResult = new DataTable();
         // Populate reconciliationResult with appropriate data
         reconciliationResult.Columns.Add("TxnDate", typeof(DateTime));
+        reconciliationResult.Columns.Add("TransactionRemarks", typeof(string));
         reconciliationResult.Columns.Add("BankWithdrawal", typeof(decimal));
         reconciliationResult.Columns.Add("ExpenseAmount", typeof(decimal));
         reconciliationResult.Columns.Add("Remarks", typeof(string));
@@ -139,6 +141,7 @@ public class BankStatementService
                 {
                     var row = reconciliationResult.NewRow();
                     row["TxnDate"] = bankStmt.TxnDate;
+                    row["TransactionRemarks"] = bankStmt.Misc;
                     row["BankWithdrawal"] = bankStmt.Withdrawals;
                     row["ExpenseAmount"] = expense.ExpenseAmt;
                     row["Remarks"] = "Matched";
@@ -158,6 +161,7 @@ public class BankStatementService
                     {
                         var row = reconciliationResult.NewRow();
                         row["TxnDate"] = bankStmt.TxnDate;
+                        row["TransactionRemarks"] = bankStmt.Misc;
                         row["BankWithdrawal"] = bankStmt.Withdrawals;
                         row["ExpenseAmount"] = expense.ExpenseAmt;
                         row["Remarks"] = "Matched with upper ceiling";
@@ -168,6 +172,7 @@ public class BankStatementService
                 {
                     var row = reconciliationResult.NewRow();
                     row["TxnDate"] = bankStmt.TxnDate;
+                    row["TransactionRemarks"] = bankStmt.Misc;
                     row["BankWithdrawal"] = bankStmt.Withdrawals;
                     row["ExpenseAmount"] = DBNull.Value;
                     row["Remarks"] = "No matching expense found";

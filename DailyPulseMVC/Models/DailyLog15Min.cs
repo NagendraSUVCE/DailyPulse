@@ -20,15 +20,16 @@ namespace Models.DailyLog
 
     public class DailyLogSummaryForEachDay
     {
-        public DateTime ActivityDate { get; set; }
+        public DateTime? ActivityDate { get; set; }
         public string? Category { get; set; }
-        public decimal TotalHrs { get; set; }
+        public decimal TotalValue { get; set; }
     }
 
     public class StreakResult
     {
         public DateTime AnalyzeDate { get; set; }
         public string? Category { get; set; }
+        public string? StreakString { get; set; }
         public decimal Target { get; set; }
         public int StreakDays { get; set; }
         public DateTime StartDate { get; set; }

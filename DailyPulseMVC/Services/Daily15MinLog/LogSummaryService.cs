@@ -26,8 +26,11 @@ public class LogSummaryService
             if (!categoryLogs.Any())
                 continue;
 
-            var totalDays = (decimal)(today - categoryLogs.Min(l => l.ActivityDate)).TotalDays + 1;
-            var overallDailyAverage = categoryLogs.Sum(l => l.TotalHrs) / totalDays;
+            var earliestDate = categoryLogs.Min(l => l.ActivityDate);
+            var totalDays = earliestDate.HasValue 
+                ? (decimal)(today - earliestDate.Value).TotalDays + 1 
+                : 0;
+            var overallDailyAverage = categoryLogs.Sum(l => l.TotalValue) / totalDays;
 
             foreach (var range in dayRanges)
             {
@@ -38,7 +41,7 @@ public class LogSummaryService
                     .Where(l => l.ActivityDate >= rangeStart && l.ActivityDate <= rangeEnd)
                     .ToList();
 
-                decimal rangeAverage = rangeLogs.Sum(l => l.TotalHrs);// range;
+                decimal rangeAverage = rangeLogs.Sum(l => l.TotalValue);// range;
 
                 decimal overallRangeAverage = overallDailyAverage * range;
 
@@ -74,15 +77,18 @@ public class LogSummaryService
             if (!categoryLogs.Any())
                 continue;
 
-            var totalDays = (decimal)(today - categoryLogs.Min(l => l.ActivityDate)).TotalDays + 1;
-            var overallDailyAverage = categoryLogs.Sum(l => l.TotalHrs) / totalDays;
+            var earliestDate = categoryLogs.Min(l => l.ActivityDate);
+            var totalDays = earliestDate.HasValue 
+                ? (decimal)(today - earliestDate.Value).TotalDays + 1 
+                : 0;
+            var overallDailyAverage = categoryLogs.Sum(l => l.TotalValue) / totalDays;
             var overallWeeklyAverage = overallDailyAverage * 7;
 
             var lastWeekLogs = categoryLogs
                 .Where(l => l.ActivityDate >= lastWeekStart && l.ActivityDate <= yesterday)
                 .ToList();
 
-            decimal lastWeekAverage = lastWeekLogs.Sum(l => l.TotalHrs);/// 7;
+            decimal lastWeekAverage = lastWeekLogs.Sum(l => l.TotalValue);/// 7;
 
             decimal percentageChange = overallWeeklyAverage == 0 ? 0 :
                 ((lastWeekAverage - overallWeeklyAverage) / overallWeeklyAverage) * 100;

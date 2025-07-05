@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Data;
 using System.Diagnostics;
 using DailyPulseMVC.Models;
+using Models.DailyLog;
 
 namespace DailyPulseMVC.Controllers;
 
@@ -54,6 +55,13 @@ public class Daily15MinLogController : Controller
         dsNew.Tables.Add(dt);
 
         return View("Common", dsNew);
+    }
+
+    public IActionResult Charts()
+    {
+       List<DailyLogSummaryForEachDay> lstDailyLogSummary = (new Daily15MinLogService()).GetDailyLogSummaryForEachDaysAsync().Result;
+
+        return View("Charts", lstDailyLogSummary);
     }
 
     public IActionResult Privacy()

@@ -1,6 +1,7 @@
 using System.Data;
 using Models.DailyLog;
 using Microsoft.Extensions.Configuration;
+using DailyPulseMVC.Services;
 public class Daily15MinLogService
 {
     public Daily15MinLogService()
@@ -164,37 +165,85 @@ public class Daily15MinLogService
         return lstDailyLog15Min;
     }
 
-    public async Task<DataSet> AvgStreak()
+    public async Task<List<DailyLogSummaryForEachDay>> GetDailyLogSummaryForEachDaysAsync()
     {
-
-        DataSet dataSet = await GetDaily15MinLogFromGraphExcel();
-        if (dataSet == null || dataSet.Tables.Count < 7)
-        {
-            throw new Exception("DataSet is null or does not contain enough tables.");
-        }
         List<DailyLog15Min> lstDailyLog15Min = new List<DailyLog15Min>();
         var temp = (new Daily15MinLogService()).GetDaily15MinLogAsync().Result;
         lstDailyLog15Min.AddRange(temp.ToList());
+        var categories = new[] { "SelfHelp", "SelfCode", "SelfTech", "SelfSong", "FitbitDailySteps" };
+        List<DailyLogSummaryForEachDay> lstDailyLogSummaryForEachDay = GetSummaryForEachDay(lstDailyLog15Min, categories);
+        var fitbitService = new FitbitService();
+        List<StepsData> lstStepsData = await fitbitService.GetAndSaveLatestStepsData();
 
+        foreach (var stepData in lstStepsData)
+        {
+            var matchingEntry = lstDailyLogSummaryForEachDay
+            .FirstOrDefault(summary => summary.ActivityDate.HasValue && summary.ActivityDate.Value.Date == stepData.DateOfActivity && summary.Category == "FitbitDailySteps");
+
+            if (matchingEntry != null)
+            {
+                matchingEntry.TotalValue = stepData.StepsValue;
+            }
+            else
+            {
+                lstDailyLogSummaryForEachDay.Add(new DailyLogSummaryForEachDay
+                {
+                    ActivityDate = stepData.DateOfActivity,
+                    Category = "FitbitDailySteps",
+                    TotalValue = stepData.StepsValue
+                });
+            }
+        }
+        return lstDailyLogSummaryForEachDay;
+    }
+    public async Task<DataSet> AvgStreak()
+    {
+        var categories = new[] { "SelfHelp", "SelfCode", "SelfTech", "SelfSong", "FitbitDailySteps" };
+        List<DailyLogSummaryForEachDay> lstDailyLogSummaryForEachDay = await GetDailyLogSummaryForEachDaysAsync();
+        /* List<DailyLog15Min> lstDailyLog15Min = new List<DailyLog15Min>();
+         var temp = (new Daily15MinLogService()).GetDaily15MinLogAsync().Result;
+         lstDailyLog15Min.AddRange(temp.ToList());
+         List<DailyLogSummaryForEachDay> lstDailyLogSummaryForEachDay = GetSummaryForEachDay(lstDailyLog15Min, categories);
+         var fitbitService = new FitbitService();
+         List<StepsData> lstStepsData = await fitbitService.GetAndSaveLatestStepsData();
+
+         foreach (var stepData in lstStepsData)
+         {
+             var matchingEntry = lstDailyLogSummaryForEachDay
+             .FirstOrDefault(summary => summary.ActivityDate.Date == stepData.DateOfActivity && summary.Category == "FitbitDailySteps");
+
+             if (matchingEntry != null)
+             {
+                 matchingEntry.TotalValue = stepData.StepsValue;
+             }
+             else
+             {
+                 lstDailyLogSummaryForEachDay.Add(new DailyLogSummaryForEachDay
+                 {
+                     ActivityDate = stepData.DateOfActivity,
+                     Category = "FitbitDailySteps",
+                     TotalValue = stepData.StepsValue
+                 });
+             }
+         }*/
         // Group data by year and category
-        var groupedData = lstDailyLog15Min
-            .Where(log => new[] { "SelfHelp", "SelfCode", "SelfTech", "SelfSong" }.Contains(log.category))
-            .GroupBy(log => new { Year = log.dtActivity.Year, log.category })
+        var groupedData = lstDailyLogSummaryForEachDay
+            .Where(log => categories.Contains(log.Category))
+            .GroupBy(log => new { Year = log.ActivityDate?.Year, log.Category })
             .Select(g => new
             {
                 Year = g.Key.Year,
-                Category = g.Key.category,
-                TotalHrs = g.Sum(log => log.Hrs),
-                DaysCount = g.Select(log => log.dtActivity.Date).Distinct().Count()
+                Category = g.Key.Category,
+                TotalValue = g.Sum(log => log.TotalValue),
+                DaysCount = g.Select(log => log.ActivityDate?.Date).Distinct().Count()
             })
             .ToList();
 
         // Get distinct years and categories
         var years = groupedData.Select(g => g.Year).Distinct().OrderBy(y => y).ToList();
-        var categories = new[] { "SelfHelp", "SelfCode", "SelfTech", "SelfSong" };
 
         // Create a DataTable for total hours
-        var totalHoursTable = new DataTable("TotalHours");
+        var totalHoursTable = new DataTable("TotalValue");
         totalHoursTable.Columns.Add("Category");
         foreach (var year in years)
         {
@@ -210,7 +259,7 @@ public class Daily15MinLogService
             {
                 var totalHrs = groupedData
                     .Where(g => g.Year == year && g.Category == category)
-                    .Select(g => g.TotalHrs)
+                    .Select(g => g.TotalValue)
                     .FirstOrDefault();
                 row[year.ToString()] = totalHrs;
             }
@@ -236,7 +285,7 @@ public class Daily15MinLogService
                     .Where(g => g.Year == year && g.Category == category)
                     .FirstOrDefault();
 
-                var totalHrs = dataForYearAndCategory?.TotalHrs ?? 0;
+                var totalHrs = dataForYearAndCategory?.TotalValue ?? 0;
                 var daysCount = dataForYearAndCategory?.DaysCount ?? 0;
 
                 // Assume 365 days for the year if no entries exist
@@ -246,8 +295,11 @@ public class Daily15MinLogService
             }
             averageHoursTable.Rows.Add(row);
         }
-        DataTable past30DaysTable = Past14DaysData(lstDailyLog15Min, categories);
-        List<DailyLogSummaryForEachDay> lstDailyLogSummaryForEachDay = GetSummaryForEachDay(lstDailyLog15Min, categories);
+        DataTable past30DaysTable = Past14DaysData(lstDailyLogSummaryForEachDay, categories);
+        var last14DaysData = lstDailyLogSummaryForEachDay
+            .Where(log => log.ActivityDate?.Date >= DateTime.Now.Date.AddDays(-15) && log.ActivityDate?.Date < DateTime.Now.Date)
+            .ToList();
+        DataTable weeklyData = GetDynamicWeeklySummary(last14DaysData, DateTime.Now.AddDays(-14), DateTime.Now);
         // Convert the summary list to a DataTable
         DataTable categoriesTotalHrsEachDay = DataTableConverter.ToDataTable(lstDailyLogSummaryForEachDay);
 
@@ -256,22 +308,20 @@ public class Daily15MinLogService
     { "SelfCode", 0.25m },
             { "SelfTech", 0.34m },
     { "SelfHelp", 0.50m },
-    { "SelfSong", 0.25m }
+    { "SelfSong", 0.25m }, { "FitbitDailySteps", 10000m }
 };
+
+
 
         List<StreakResult> streakResults = StreakAnalyzer.AnalyzeStreaks(lstDailyLogSummaryForEachDay, targets);
 
-        foreach (var result in streakResults)
-        {
-            Console.WriteLine($"You met continuous target of {targets[result.Category]} for {result.StreakDays} days " +
-                              $"starting from {result.EndDate:dd MMM yyyy} till {result.StartDate:dd MMM yyyy} " +
-                              $"and you need {result.RequiredToday:F2} today to increase streak to {result.StreakDays + 1} days.");
-        }
 
-        DataTable streakResultsDatatable = DataTableConverter.ToDataTable(streakResults);
-        DataTableConverter.DataTableToCsv(streakResultsDatatable
-        , @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/SelfCode/DatabaseInCSV/"
-        , "StreakResults.csv", false);
+
+        // Ensure the class is defined or imported
+        // Uncomment and replace the following line with the correct implementation if needed:
+        Daily15MinLogFileService daily15MinLogFileServiceObj = new Daily15MinLogFileService();
+        DataTable streakResultsDatatable = await daily15MinLogFileServiceObj.SaveStreakResultToFile(streakResults);
+
         // Add both tables to the DataSet
         var dsNew = new DataSet();
         // Add the past 30 days table to the DataSet
@@ -281,18 +331,19 @@ public class Daily15MinLogService
 
         DataTable summaryTable = new LogSummaryService().GetCategorySummary(lstDailyLogSummaryForEachDay, dayRanges);
 
-        dsNew.Tables.Add(summaryTable);
-        dsNew.Tables.Add((new LogSummaryService().GetCategoryWeeklySummary(lstDailyLogSummaryForEachDay)));
+        // dsNew.Tables.Add(summaryTable);
+        // dsNew.Tables.Add((new LogSummaryService().GetCategoryWeeklySummary(lstDailyLogSummaryForEachDay)));
         dsNew.Tables.Add(streakResultsDatatable);
-        dsNew.Tables.Add(averageHoursTable);
-        dsNew.Tables.Add(totalHoursTable);
+        // dsNew.Tables.Add(averageHoursTable);
+        // dsNew.Tables.Add(totalHoursTable);
+        dsNew.Tables.Add(weeklyData);
         // dsNew.Tables.Add(categoriesTotalHrsEachDay);
 
 
         return dsNew;
     }
 
-    private static DataTable Past14DaysData(List<DailyLog15Min> lstDailyLog15Min, string[] categories)
+    private static DataTable Past14DaysData(List<DailyLogSummaryForEachDay> lstDailyLog15Min, string[] categories)
     {
         // Create a DataTable for the past 30 days
         var past30DaysTable = new DataTable("Past30Days");
@@ -315,11 +366,15 @@ public class Daily15MinLogService
             foreach (var date in past30Days)
             {
                 var totalHrsForDate = lstDailyLog15Min
-                    .Where(log => log.dtActivity.Date == date && log.category == category)
-                    .Sum(log => log.Hrs);
+                    .Where(log => log.ActivityDate?.Date == date && log.Category == category)
+                    .Sum(log => log.TotalValue);
 
                 // Use HTML for tick and cross marks
-                if (totalHrsForDate > 0)
+                if (totalHrsForDate >= 10000 && category == "FitbitDailySteps")
+                {
+                    row[date.ToString("yyyy-MM-dd")] = "<span style='color:green;'>&#x2705;</span>"; // Green tick
+                }
+                else if (totalHrsForDate > 0 && category != "FitbitDailySteps")
                 {
                     row[date.ToString("yyyy-MM-dd")] = "<span style='color:green;'>&#x2705;</span>"; // Green tick
                 }
@@ -333,6 +388,95 @@ public class Daily15MinLogService
 
         return past30DaysTable;
     }
+
+    public static DataTable GetDynamicWeeklySummary(
+    List<DailyLogSummaryForEachDay> logs,
+    DateTime startDate,
+    DateTime endDate)
+    {
+        // Normalize start to previous Sunday
+        int daysToSunday = ((int)startDate.DayOfWeek + 7 - (int)DayOfWeek.Sunday) % 7;
+        DateTime normalizedStart = startDate.AddDays(-daysToSunday).Date;
+
+        // Normalize end to next Saturday
+        int daysToSaturday = ((int)DayOfWeek.Saturday - (int)endDate.DayOfWeek + 7) % 7;
+        DateTime normalizedEnd = endDate.AddDays(daysToSaturday).Date;
+
+        // Prepare DataTable
+        var table = new DataTable();
+        table.Columns.Add("Category", typeof(string));
+        table.Columns.Add("WeekStartDate", typeof(DateTime));
+        string[] dayColumns = { "01-Sun", "02-Mon", "03-Tue", "04-Wed", "05-Thu", "06-Fri", "07-Sat" };
+        foreach (var col in dayColumns)
+            table.Columns.Add(col, typeof(string));
+
+        // Group logs by Category
+        var categories = logs.Select(l => l.Category).Distinct();
+
+        foreach (var category in categories)
+        {
+            DateTime weekStart = normalizedStart;
+
+            while (weekStart <= normalizedEnd)
+            {
+                DateTime weekEnd = weekStart.AddDays(6);
+
+                var weekLogs = logs
+                    .Where(l => l.Category == category && l.ActivityDate?.Date >= weekStart && l.ActivityDate?.Date <= weekEnd)
+                    .ToList();
+
+                if (weekLogs.Any())
+                {
+                    var row = table.NewRow();
+                    row["Category"] = category;
+                    row["WeekStartDate"] = weekStart;
+
+                    foreach (var log in weekLogs)
+                    {
+                        int dayIndex = (int)log.ActivityDate?.DayOfWeek;
+                        string columnName = dayColumns[dayIndex];
+                        row[columnName] = (row[columnName] == DBNull.Value ? 0 : (decimal)row[columnName]) + log.TotalValue;
+                        decimal decValue = 0.25m;
+                        if (decimal.TryParse(row[columnName]?.ToString(), out decValue))
+                        //if (row[columnName] != DBNull.Value && row[columnName] is decimal value)
+                        {
+                            if (category == "FitbitDailySteps")
+                            {
+                                row[columnName] = decValue >= 10000
+                                    ? "<span style='color:green;'>&#x2705;</span>" // Green tick
+                                    : "<span style='color:red;'>&#10008;</span>"; // Red cross
+                            }
+                            else
+                            {
+                                row[columnName] = decValue > 0
+                                    ? "<span style='color:green;'>&#x2705;</span>" // Green tick
+                                    : "<span style='color:red;'>&#10008;</span>"; // Red cross
+                            }
+                        }
+
+                    }
+
+                    table.Rows.Add(row);
+                }
+
+                weekStart = weekStart.AddDays(7); // Move to next week
+            }
+        }
+
+        // Sort rows by WeekStartDate descending
+        var sortedRows = table.AsEnumerable()
+            .OrderBy(r => r.Field<string>("Category"))
+            .ThenByDescending(r => r.Field<DateTime>("WeekStartDate"))
+            .ToList();
+
+        var sortedTable = table.Clone(); // Clone structure
+        foreach (var row in sortedRows)
+            sortedTable.ImportRow(row);
+
+        return sortedTable;
+    }
+
+
 
     private static List<DailyLogSummaryForEachDay> GetSummaryForEachDay(List<DailyLog15Min> lstDailyLog15Min, string[] categories)
     {
@@ -370,7 +514,7 @@ public class Daily15MinLogService
                 {
                     ActivityDate = date,
                     Category = category,
-                    TotalHrs = totalHrs
+                    TotalValue = totalHrs
                 });
             }
         }

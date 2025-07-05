@@ -1,0 +1,143 @@
+@using Models.DailyLog
+@model List<DailyLogSummaryForEachDay>
+
+@{
+    ViewData["Title"] = "Daily Log Summary";
+    var categories = Model.Select(x => x.Category).Distinct().ToList();
+}
+
+<h2>Daily Log Summary</h2>
+<div>
+    <label for="categoryDropdown">Category:</label>
+    <select id="categoryDropdown" onchange="filterDataByCategory()" style="margin-bottom: 10px; padding: 5px;">
+        @foreach (var category in categories)
+        {
+            <option value="@category">@category</option>
+        }
+    </select>
+</div>
+
+
+<div>
+    <button onclick="setTimeRange('day')">Day</button>
+    <button onclick="setTimeRange('week')">Week</button>
+    <button onclick="setTimeRange('month')">Month</button>
+    <button onclick="setTimeRange('year')">Year</button>
+</div>
+
+<div style="margin-top: 10px;">
+    <button onclick="navigate(-1)">&lt;</button>
+    <span id="timeRangeLabel"></span>
+    <button onclick="navigate(1)">&gt;</button>
+</div>
+
+<table id="summaryTable" class="table table-bordered table-striped" style="margin-top: 10px;">
+    <thead>
+        <tr>
+            <th>Time Range</th>
+            <th>Total Value</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+<script>
+    const data = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model));
+    let currentCategory = data[0]?.Category || '';
+    let timeRange = 'day';
+    let currentIndex = 0;
+
+    function filterDataByCategory() {
+        currentCategory = document.getElementById('categoryDropdown').value;
+        currentIndex = 0;
+        renderTable();
+    }
+    function updateView() {
+        currentCategory = document.getElementById('categoryDropdown').value;
+        currentIndex = 0;
+        renderTable();
+    }
+
+    function setTimeRange(range) {
+        timeRange = range;
+        currentIndex = 0;
+        renderTable();
+    }
+
+    function navigate(direction) {
+        currentIndex += direction;
+        renderTable();
+    }
+
+    function renderTable() {
+        const filteredData = data.filter(item => item.Category === currentCategory);
+        const groupedData = groupDataByTimeRange(filteredData, timeRange);
+        const tableBody = document.querySelector('#summaryTable tbody');
+        tableBody.innerHTML = '';
+
+        if (currentIndex < 0 || currentIndex >= groupedData.length) {
+            currentIndex = Math.max(0, Math.min(currentIndex, groupedData.length - 1));
+        }
+
+        const currentData = groupedData[currentIndex];
+        document.getElementById('timeRangeLabel').innerText = currentData?.label || 'No Data';
+
+        if (currentData) {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${currentData.label}</td><td>${currentData.totalValue.toFixed(2)}</td>`;
+            tableBody.appendChild(row);
+        }
+    }
+
+    function groupDataByTimeRange(data, range) {
+        const grouped = [];
+        const dateKeyFormat = {
+            day: 'yyyy-MM-dd',
+            week: 'yyyy-WW',
+            month: 'yyyy-MM',
+            year: 'yyyy'
+        };
+
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            year: 'numeric',
+            month: range === 'year' ? undefined : '2-digit',
+            day: range === 'day' ? '2-digit' : undefined,
+            weekday: range === 'week' ? 'short' : undefined
+        });
+
+        const startOfWeek = date => {
+            const d = new Date(date);
+            d.setDate(d.getDate() - d.getDay());
+            return d;
+        };
+
+        const endOfWeek = date => {
+            const d = new Date(date);
+            d.setDate(d.getDate() + (6 - d.getDay()));
+            return d;
+        };
+
+        const groupBy = {
+            day: date => formatter.format(date),
+            week: date => `${formatter.format(startOfWeek(date))}-${formatter.format(endOfWeek(date))}`,
+            month: date => formatter.format(date),
+            year: date => formatter.format(date)
+        };
+
+        data.forEach(item => {
+            const key = groupBy[range](new Date(item.ActivityDate));
+            const group = grouped.find(g => g.label === key);
+            if (group) {
+                group.totalValue += item.TotalValue;
+            } else {
+                grouped.push({ label: key, totalValue: item.TotalValue });
+            }
+        });
+
+        return grouped;
+    }
+
+    // Initialize the view
+    updateView();
+</script>
