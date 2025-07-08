@@ -38,7 +38,10 @@ public static class DataTableConverter
         string filePath = System.IO.Path.Combine(baseFolder, fileName);
 
         // Ensure the directory exists
-        System.IO.Directory.CreateDirectory(baseFolder);
+        if (!string.IsNullOrWhiteSpace(baseFolder))
+        {
+            System.IO.Directory.CreateDirectory(baseFolder);
+        }
 
         // Open the file for writing
         using (var writer = new System.IO.StreamWriter(filePath, !overwriteAllContents))

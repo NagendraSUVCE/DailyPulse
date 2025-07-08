@@ -308,7 +308,7 @@ public class Daily15MinLogService
     { "SelfCode", 0.25m },
             { "SelfTech", 0.34m },
     { "SelfHelp", 0.50m },
-    { "SelfSong", 0.25m }, { "FitbitDailySteps", 10000m }
+    { "SelfSong", 0.25m }, { "FitbitDailySteps", 11500m }
 };
 
 

@@ -36,6 +36,10 @@ namespace DailyPulseMVC.Services
             , ""
             , _tempStreakResultFileName, false);
             await UploadDataToGraphAsync();
+               if (File.Exists(_tempStreakResultFileName))
+            {
+                File.Delete(_tempStreakResultFileName);
+            }
             return streakResultsDatatable;
         }
 
