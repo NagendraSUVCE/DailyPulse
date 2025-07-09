@@ -9,14 +9,13 @@
 <h2>Daily Log Summary</h2>
 <div>
     <label for="categoryDropdown">Category:</label>
-    <select id="categoryDropdown" onchange="filterDataByCategory()" style="margin-bottom: 10px; padding: 5px;">
+    <select id="categoryDropdown" onchange="renderTable()" style="margin-bottom: 10px; padding: 5px;">
         @foreach (var category in categories)
         {
             <option value="@category">@category</option>
         }
     </select>
 </div>
-
 
 <div>
     <button onclick="setTimeRange('day')">Day</button>
@@ -25,17 +24,10 @@
     <button onclick="setTimeRange('year')">Year</button>
 </div>
 
-<div style="margin-top: 10px;">
-    <button onclick="navigate(-1)">&lt;</button>
-    <span id="timeRangeLabel"></span>
-    <button onclick="navigate(1)">&gt;</button>
-</div>
-
 <table id="summaryTable" class="table table-bordered table-striped" style="margin-top: 10px;">
     <thead>
-        <tr>
-            <th>Time Range</th>
-            <th>Total Value</th>
+        <tr id="tableHeader">
+            <th>Category</th>
         </tr>
     </thead>
     <tbody>
@@ -44,100 +36,145 @@
 
 <script>
     const data = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model));
-    let currentCategory = data[0]?.Category || '';
     let timeRange = 'day';
-    let currentIndex = 0;
-
-    function filterDataByCategory() {
-        currentCategory = document.getElementById('categoryDropdown').value;
-        currentIndex = 0;
-        renderTable();
-    }
-    function updateView() {
-        currentCategory = document.getElementById('categoryDropdown').value;
-        currentIndex = 0;
-        renderTable();
-    }
 
     function setTimeRange(range) {
         timeRange = range;
-        currentIndex = 0;
-        renderTable();
-    }
-
-    function navigate(direction) {
-        currentIndex += direction;
         renderTable();
     }
 
     function renderTable() {
-        const filteredData = data.filter(item => item.Category === currentCategory);
-        const groupedData = groupDataByTimeRange(filteredData, timeRange);
+        const categories = [...new Set(data.map(item => item.Category))];
+        const tableHeader = document.querySelector('#tableHeader');
         const tableBody = document.querySelector('#summaryTable tbody');
+        tableHeader.innerHTML = '<th>Category</th>';
         tableBody.innerHTML = '';
 
-        if (currentIndex < 0 || currentIndex >= groupedData.length) {
-            currentIndex = Math.max(0, Math.min(currentIndex, groupedData.length - 1));
+        let groupedData;
+        if (timeRange === 'year') {
+            groupedData = groupDataByYear(data);
+        } else if (timeRange === 'month') {
+            groupedData = groupDataByMonth(data);
+        } else if (timeRange === 'week') {
+            groupedData = groupDataByWeek(data);
+        } else if (timeRange === 'day') {
+            groupedData = groupDataByDay(data);
         }
 
-        const currentData = groupedData[currentIndex];
-        document.getElementById('timeRangeLabel').innerText = currentData?.label || 'No Data';
-
-        if (currentData) {
-            const row = document.createElement('tr');
-            row.innerHTML = `<td>${currentData.label}</td><td>${currentData.totalValue.toFixed(2)}</td>`;
-            tableBody.appendChild(row);
-        }
-    }
-
-    function groupDataByTimeRange(data, range) {
-        const grouped = [];
-        const dateKeyFormat = {
-            day: 'yyyy-MM-dd',
-            week: 'yyyy-WW',
-            month: 'yyyy-MM',
-            year: 'yyyy'
-        };
-
-        const formatter = new Intl.DateTimeFormat('en-US', {
-            year: 'numeric',
-            month: range === 'year' ? undefined : '2-digit',
-            day: range === 'day' ? '2-digit' : undefined,
-            weekday: range === 'week' ? 'short' : undefined
+        const columns = Object.keys(groupedData[0]?.values || {}).sort((a, b) => new Date(a) - new Date(b));
+        columns.forEach(column => {
+            const th = document.createElement('th');
+            th.innerText = column;
+            tableHeader.appendChild(th);
         });
 
-        const startOfWeek = date => {
-            const d = new Date(date);
-            d.setDate(d.getDate() - d.getDay());
-            return d;
-        };
+        categories.forEach(category => {
+            const row = document.createElement('tr');
+            const categoryCell = document.createElement('td');
+            categoryCell.innerText = category;
+            row.appendChild(categoryCell);
 
-        const endOfWeek = date => {
-            const d = new Date(date);
-            d.setDate(d.getDate() + (6 - d.getDay()));
-            return d;
-        };
+            columns.forEach(column => {
+                const cell = document.createElement('td');
+                const categoryData = groupedData.find(item => item.category === category);
+                cell.innerText = categoryData?.values[column]?.toFixed(2) || '';
+                row.appendChild(cell);
+            });
 
-        const groupBy = {
-            day: date => formatter.format(date),
-            week: date => `${formatter.format(startOfWeek(date))}-${formatter.format(endOfWeek(date))}`,
-            month: date => formatter.format(date),
-            year: date => formatter.format(date)
-        };
+            tableBody.appendChild(row);
+        });
+    }
+
+    function groupDataByYear(data) {
+        const grouped = [];
+        const years = [...new Set(data.map(item => new Date(item.ActivityDate).getFullYear()))];
 
         data.forEach(item => {
-            const key = groupBy[range](new Date(item.ActivityDate));
-            const group = grouped.find(g => g.label === key);
-            if (group) {
-                group.totalValue += item.TotalValue;
-            } else {
-                grouped.push({ label: key, totalValue: item.TotalValue });
+            const year = new Date(item.ActivityDate).getFullYear();
+            let group = grouped.find(g => g.category === item.Category);
+            if (!group) {
+                group = { category: item.Category, values: {} };
+                years.forEach(y => group.values[y] = 0);
+                grouped.push(group);
             }
+            group.values[year] += item.TotalValue;
+        });
+
+        return grouped;
+    }
+
+    function groupDataByMonth(data) {
+        const grouped = [];
+        const currentDate = new Date();
+        const months = [...new Set(data.map(item => {
+            const date = new Date(item.ActivityDate);
+            return `${date.getFullYear()}-${date.toLocaleString('default', { month: 'short' })}`;
+        }))].filter(month => {
+            const [year, monthName] = month.split('-');
+            const monthDate = new Date(`${monthName} 1, ${year}`);
+            const diffMonths = (currentDate.getFullYear() - monthDate.getFullYear()) * 12 + (currentDate.getMonth() - monthDate.getMonth());
+            return diffMonths >= 0 && diffMonths < 13;
+        });
+
+        data.forEach(item => {
+            const date = new Date(item.ActivityDate);
+            const month = `${date.getFullYear()}-${date.toLocaleString('default', { month: 'short' })}`;
+            if (!months.includes(month)) return;
+
+            let group = grouped.find(g => g.category === item.Category);
+            if (!group) {
+                group = { category: item.Category, values: {} };
+                months.forEach(m => group.values[m] = 0);
+                grouped.push(group);
+            }
+            group.values[month] += item.TotalValue;
+        });
+
+        return grouped;
+    }
+
+    function groupDataByWeek(data) {
+        const grouped = [];
+        const weeks = [...new Set(data.map(item => {
+            const date = new Date(item.ActivityDate);
+            const weekNumber = Math.ceil((date.getDate() - date.getDay() + 1) / 7);
+            return `${date.getFullYear()}-Week${weekNumber}`;
+        }))];
+
+        data.forEach(item => {
+            const date = new Date(item.ActivityDate);
+            const weekNumber = Math.ceil((date.getDate() - date.getDay() + 1) / 7);
+            const week = `${date.getFullYear()}-Week${weekNumber}`;
+            let group = grouped.find(g => g.category === item.Category);
+            if (!group) {
+                group = { category: item.Category, values: {} };
+                weeks.forEach(w => group.values[w] = 0);
+                grouped.push(group);
+            }
+            group.values[week] += item.TotalValue;
+        });
+
+        return grouped;
+    }
+
+    function groupDataByDay(data) {
+        const grouped = [];
+        const days = [...new Set(data.map(item => new Date(item.ActivityDate).toISOString().split('T')[0]))];
+
+        data.forEach(item => {
+            const day = new Date(item.ActivityDate).toISOString().split('T')[0];
+            let group = grouped.find(g => g.category === item.Category);
+            if (!group) {
+                group = { category: item.Category, values: {} };
+                days.forEach(d => group.values[d] = 0);
+                grouped.push(group);
+            }
+            group.values[day] += item.TotalValue;
         });
 
         return grouped;
     }
 
     // Initialize the view
-    updateView();
+    renderTable();
 </script>
