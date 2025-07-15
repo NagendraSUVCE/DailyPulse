@@ -8,16 +8,6 @@
 
 <h2>Daily Log Summary</h2>
 <div>
-    <label for="categoryDropdown">Category:</label>
-    <select id="categoryDropdown" onchange="renderTable()" style="margin-bottom: 10px; padding: 5px;">
-        @foreach (var category in categories)
-        {
-            <option value="@category">@category</option>
-        }
-    </select>
-</div>
-
-<div>
     <button onclick="setTimeRange('day')">Day</button>
     <button onclick="setTimeRange('week')">Week</button>
     <button onclick="setTimeRange('month')">Month</button>
@@ -27,7 +17,7 @@
 <table id="summaryTable" class="table table-bordered table-striped" style="margin-top: 10px;">
     <thead>
         <tr id="tableHeader">
-            <th>Category</th>
+            <th>Date</th>
         </tr>
     </thead>
     <tbody>
@@ -36,7 +26,7 @@
 
 <script>
     const data = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model));
-    let timeRange = 'day';
+    let timeRange = 'month';
 
     function setTimeRange(range) {
         timeRange = range;
@@ -47,8 +37,14 @@
         const categories = [...new Set(data.map(item => item.Category))];
         const tableHeader = document.querySelector('#tableHeader');
         const tableBody = document.querySelector('#summaryTable tbody');
-        tableHeader.innerHTML = '<th>Category</th>';
+        tableHeader.innerHTML = '<th>Date</th>';
         tableBody.innerHTML = '';
+
+        categories.forEach(category => {
+            const th = document.createElement('th');
+            th.innerText = category;
+            tableHeader.appendChild(th);
+        });
 
         let groupedData;
         if (timeRange === 'year') {
@@ -61,117 +57,74 @@
             groupedData = groupDataByDay(data);
         }
 
-        const columns = Object.keys(groupedData[0]?.values || {}).sort((a, b) => new Date(a) - new Date(b));
-        columns.forEach(column => {
-            const th = document.createElement('th');
-            th.innerText = column;
-            tableHeader.appendChild(th);
-        });
+        const rows = Object.keys(groupedData).sort((a, b) => new Date(a) - new Date(b));
+        rows.forEach(row => {
+            const tr = document.createElement('tr');
+            const dateCell = document.createElement('td');
+            dateCell.innerText = row;
+            tr.appendChild(dateCell);
 
-        categories.forEach(category => {
-            const row = document.createElement('tr');
-            const categoryCell = document.createElement('td');
-            categoryCell.innerText = category;
-            row.appendChild(categoryCell);
-
-            columns.forEach(column => {
+            categories.forEach(category => {
                 const cell = document.createElement('td');
-                const categoryData = groupedData.find(item => item.category === category);
-                cell.innerText = categoryData?.values[column]?.toFixed(2) || '';
-                row.appendChild(cell);
+                cell.innerText = groupedData[row][category]?.toFixed(2) || '';
+                tr.appendChild(cell);
             });
 
-            tableBody.appendChild(row);
+            tableBody.appendChild(tr);
         });
     }
 
     function groupDataByYear(data) {
-        const grouped = [];
-        const years = [...new Set(data.map(item => new Date(item.ActivityDate).getFullYear()))];
-
+        const grouped = {};
         data.forEach(item => {
             const year = new Date(item.ActivityDate).getFullYear();
-            let group = grouped.find(g => g.category === item.Category);
-            if (!group) {
-                group = { category: item.Category, values: {} };
-                years.forEach(y => group.values[y] = 0);
-                grouped.push(group);
-            }
-            group.values[year] += item.TotalValue;
+            if (!grouped[year]) grouped[year] = {};
+            grouped[year][item.Category] = (grouped[year][item.Category] || 0) + item.TotalValue;
         });
-
         return grouped;
     }
 
     function groupDataByMonth(data) {
-        const grouped = [];
+        const grouped = {};
         const currentDate = new Date();
-        const months = [...new Set(data.map(item => {
-            const date = new Date(item.ActivityDate);
-            return `${date.getFullYear()}-${date.toLocaleString('default', { month: 'short' })}`;
-        }))].filter(month => {
-            const [year, monthName] = month.split('-');
-            const monthDate = new Date(`${monthName} 1, ${year}`);
-            const diffMonths = (currentDate.getFullYear() - monthDate.getFullYear()) * 12 + (currentDate.getMonth() - monthDate.getMonth());
-            return diffMonths >= 0 && diffMonths < 13;
-        });
-
         data.forEach(item => {
             const date = new Date(item.ActivityDate);
             const month = `${date.getFullYear()}-${date.toLocaleString('default', { month: 'short' })}`;
-            if (!months.includes(month)) return;
-
-            let group = grouped.find(g => g.category === item.Category);
-            if (!group) {
-                group = { category: item.Category, values: {} };
-                months.forEach(m => group.values[m] = 0);
-                grouped.push(group);
+            const diffMonths = (currentDate.getFullYear() - date.getFullYear()) * 12 + (currentDate.getMonth() - date.getMonth());
+            if (diffMonths >= 0 && diffMonths < 12) {
+                if (!grouped[month]) grouped[month] = {};
+                grouped[month][item.Category] = (grouped[month][item.Category] || 0) + item.TotalValue;
             }
-            group.values[month] += item.TotalValue;
         });
-
         return grouped;
     }
 
     function groupDataByWeek(data) {
-        const grouped = [];
-        const weeks = [...new Set(data.map(item => {
-            const date = new Date(item.ActivityDate);
-            const weekNumber = Math.ceil((date.getDate() - date.getDay() + 1) / 7);
-            return `${date.getFullYear()}-Week${weekNumber}`;
-        }))];
-
+        const grouped = {};
         data.forEach(item => {
             const date = new Date(item.ActivityDate);
             const weekNumber = Math.ceil((date.getDate() - date.getDay() + 1) / 7);
             const week = `${date.getFullYear()}-Week${weekNumber}`;
-            let group = grouped.find(g => g.category === item.Category);
-            if (!group) {
-                group = { category: item.Category, values: {} };
-                weeks.forEach(w => group.values[w] = 0);
-                grouped.push(group);
-            }
-            group.values[week] += item.TotalValue;
+            if (!grouped[week]) grouped[week] = {};
+            grouped[week][item.Category] = (grouped[week][item.Category] || 0) + item.TotalValue;
         });
-
         return grouped;
     }
 
     function groupDataByDay(data) {
-        const grouped = [];
-        const days = [...new Set(data.map(item => new Date(item.ActivityDate).toISOString().split('T')[0]))];
+        const grouped = {};
+        const currentDate = new Date();
+        const pastDate = new Date();
+        pastDate.setDate(currentDate.getDate() - 30);
 
         data.forEach(item => {
             const day = new Date(item.ActivityDate).toISOString().split('T')[0];
-            let group = grouped.find(g => g.category === item.Category);
-            if (!group) {
-                group = { category: item.Category, values: {} };
-                days.forEach(d => group.values[d] = 0);
-                grouped.push(group);
+            const itemDate = new Date(day);
+            if (itemDate >= pastDate && itemDate <= currentDate) {
+                if (!grouped[day]) grouped[day] = {};
+                grouped[day][item.Category] = (grouped[day][item.Category] || 0) + item.TotalValue;
             }
-            group.values[day] += item.TotalValue;
         });
-
         return grouped;
     }
 
