@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Data;
 using System.Diagnostics;
 using DailyPulseMVC.Models;
+using Models.Finance;
 
 namespace DailyPulseMVC.Controllers;
 
@@ -43,6 +44,20 @@ public class ExpensesController : Controller
         DataSet dsNew = new DataSet();
         DataTable dt = (new BankStatementService()).ReconcileBankStatementsWithExpenses().Result;
         dsNew.Tables.Add(dt);
+
+        return View("Common", dsNew);
+    }
+
+    public async Task<IActionResult> BankStatements()
+    {
+        DataSet dsNew = new DataSet();
+         List<BankStmt> lstBankStmtsAll = new List<BankStmt>();
+        List<BankStmt> lstBankStmts = await (new BankStatementService()).GetBankDetailsICICI();
+        lstBankStmtsAll.AddRange(lstBankStmts);
+        lstBankStmts = await (new BankStatementService()).GetBankDetailsAxis();
+        lstBankStmtsAll.AddRange(lstBankStmts);
+        DataTable dataTablePurchases = DataTableConverter.ToDataTable(lstBankStmts);
+        dsNew.Tables.Add(dataTablePurchases);
 
         return View("Common", dsNew);
     }

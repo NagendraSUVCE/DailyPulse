@@ -24,7 +24,8 @@ public class BankStatementService
         {
             bankStmtObj.BankName = "ICICI";
             bankStmtObj.TxnDate = txnDate;
-            bankStmtObj.Misc = bankStmtRow[TxnRemarksIndex].ToString();
+            bankStmtObj.TxnDetails = bankStmtRow[TxnRemarksIndex].ToString();
+            bankStmtObj.Misc = ""; //bankStmtRow[TxnRemarksIndex].ToString();
             decimal txnAmt = 0;
             if (decimal.TryParse(bankStmtRow[WithdrawalIndex].ToString(), out txnAmt))
             {
@@ -44,6 +45,7 @@ public class BankStatementService
     private List<BankStmt> GetBankStmtsGivenDataTable(DataTable bankStmtTable)
     {
         var foundTxn = false;
+        BankStmt bankStatementSingleRow = new BankStmt();
         List<BankStmt> lstBankStmt = new List<BankStmt>();
         foreach (DataRow bankStmtRow in bankStmtTable.Rows)
         {
@@ -55,12 +57,20 @@ public class BankStatementService
             }
             if (foundTxn)
             {
-                lstBankStmt.Add(GetBankStmtGivenRow(bankStmtRow));
+                bankStatementSingleRow = GetBankStmtGivenRow(bankStmtRow);
+                if (bankStatementSingleRow.TxnDate != null && bankStatementSingleRow.TxnDate != DateTime.MinValue)
+                {
+                    lstBankStmt.Add(bankStatementSingleRow);
+                }
+                else
+                {
+                    continue; // Skip processing if TxnDate is null or default
+                }
             }
         }
         return lstBankStmt;
     }
-    public List<BankStmt> GetStatementFromICICI(string fileName)
+    private List<BankStmt> GetStatementFromICICIGivenFilename(string fileName)
     {
         List<BankStmt> lstBankStmt = new List<BankStmt>();
         DataSet ds = Utility.Excel.ExcelUtilities.GetDataFromExcelNewWay(fileName);
@@ -97,7 +107,7 @@ public class BankStatementService
                 strLinks.Add(baseFolder + @"ICICI 2023 2024 OpTransactionHistoryTpr04-01-2025 Full year.xls");
                 foreach (var strlink in strLinks)
                 {
-                    lstBankStatements.AddRange(GetStatementFromICICI(strlink));
+                    lstBankStatements.AddRange(GetStatementFromICICIGivenFilename(strlink));
                 }
             }
             catch (Exception ex)
@@ -108,6 +118,104 @@ public class BankStatementService
             return lstBankStatements;
         });
     }
+
+    private BankStmt GetBankStmtGivenRowAxis(DataRow bankStmtRow)
+     {
+        BankStmt bankStmtObj = new BankStmt();
+        string input = bankStmtRow[0].ToString().Replace("\u202F", " ").Trim(); // Replace narrow no-break space with regular space
+
+        DateTime txnDate = DateTime.MinValue;
+        if (DateTime.TryParseExact(input, "dd/MM/yyyy hh:mm:ss tt",
+                   CultureInfo.InvariantCulture,
+                   DateTimeStyles.None, out txnDate))
+        {
+            bankStmtObj.BankName = "AXIS";
+            bankStmtObj.TxnDate = txnDate;
+            bankStmtObj.TxnDetails = bankStmtRow[2].ToString();
+            bankStmtObj.Misc = ""; //bankStmtRow[TxnRemarksIndex].ToString();
+            decimal txnAmt = 0;
+            if (decimal.TryParse(bankStmtRow[3].ToString(), out txnAmt))
+            {
+                bankStmtObj.Withdrawals = txnAmt;
+            }
+            if (decimal.TryParse(bankStmtRow[4].ToString(), out txnAmt))
+            {
+                bankStmtObj.Deposits = txnAmt;
+            }
+            if (decimal.TryParse(bankStmtRow[5].ToString(), out txnAmt))
+            {
+                bankStmtObj.Balance = txnAmt;
+            }
+        }
+        return bankStmtObj;
+    }
+    private List<BankStmt> GetBankStmtsGivenDataTableAxis(DataTable bankStmtTable)
+    {
+        var foundTxn = false;
+        BankStmt bankStatementSingleRow = new BankStmt();
+        List<BankStmt> lstBankStmt = new List<BankStmt>();
+        foreach (DataRow bankStmtRow in bankStmtTable.Rows)
+        {
+            string colValue = bankStmtRow[0]?.ToString() ?? string.Empty;
+            if (colValue.Contains("Tran Date"))
+            {
+                foundTxn = true;
+                continue;
+            }
+            if (foundTxn)
+            {
+                bankStatementSingleRow = GetBankStmtGivenRowAxis(bankStmtRow);
+                if (bankStatementSingleRow.TxnDate != null && bankStatementSingleRow.TxnDate != DateTime.MinValue)
+                {
+                    lstBankStmt.Add(bankStatementSingleRow);
+                }
+                else
+                {
+                    continue; // Skip processing if TxnDate is null or default
+                }
+            }
+        }
+        return lstBankStmt;
+    }
+ private List<BankStmt> GetStatementFromAxisGivenFilename(string fileName)
+    {
+        List<BankStmt> lstBankStmt = new List<BankStmt>();
+        DataSet ds = Utility.Excel.ExcelUtilities.GetDataFromExcelNewWay(fileName);
+        if (ds != null && ds.Tables.Count > 0)
+        {
+            DataTable dt = ds.Tables[0];
+            lstBankStmt = GetBankStmtsGivenDataTableAxis(dt);
+        }
+        return lstBankStmt;
+    }
+    public async Task<List<BankStmt>> GetBankDetailsAxis()
+    {
+        return await Task.Run(() =>
+        {
+            List<BankStmt> lstBankStatements = new List<BankStmt>();
+            try
+            {
+                var baseFolder = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/all Salary/Bank statements/CITI AXIS/";
+
+                List<string> strLinks = new List<string>();
+                strLinks.Add(baseFolder + @"2022 2023 CITI AXIS July 22 March 23.xlsx");
+                strLinks.Add(baseFolder + @"2023 2024 2023 Apr 2024 Mar CITI AXIS.xlsx");
+                strLinks.Add(baseFolder + @"2024 2025 2024 Apr 2025 Mar CITI AXIS.xlsx");
+                foreach (var strlink in strLinks)
+                {
+                    lstBankStatements.AddRange(GetStatementFromAxisGivenFilename(strlink));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                throw;
+            }
+            return lstBankStatements;
+        });
+    }
+
+
 
     public async Task<DataTable> ReconcileBankStatementsWithExpenses()
     {

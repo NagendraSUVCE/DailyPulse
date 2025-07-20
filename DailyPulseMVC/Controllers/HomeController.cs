@@ -25,33 +25,6 @@ public class HomeController : Controller
          await mailKitInitial.MailKitInitial(DateTime.Now.Date);
         //*/
          // Fetch Fitbit data
-        /*
-        var symbols = new List<string> { "MSFT", "0P0000XVJQ.BO" }; // List of stock symbols
-        var periods = new List<YahooFinanceApi.Period> 
-        { 
-            YahooFinanceApi.Period.Daily, 
-            YahooFinanceApi.Period.Weekly, 
-            YahooFinanceApi.Period.Monthly 
-        }; // List of periods
-
-        var historicalData = new Dictionary<string, Dictionary<YahooFinanceApi.Period, List<Candle>>>();
-
-        foreach (var symbol in symbols)
-        {
-            var periodData = new Dictionary<YahooFinanceApi.Period, List<Candle>>();
-            foreach (var period in periods)
-            {
-            var candles = (new YahooFinanceService()).GetHistoricalPriceGivenStock(
-                symbol, 
-                new DateTime(2015, 1, 1), 
-                new DateTime(2025, 7, 1), 
-                period
-            ).Result;
-
-            periodData[period] = candles;
-            }
-            historicalData[symbol] = periodData;
-        }*/
         
         var lstDailyLog15Min = await (new Daily15MinLogService()).GetDaily15MinLogAsyncForYear2025();
         return View(lstDailyLog15Min);
