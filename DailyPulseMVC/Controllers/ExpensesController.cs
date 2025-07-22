@@ -54,9 +54,8 @@ public class ExpensesController : Controller
          List<BankStmt> lstBankStmtsAll = new List<BankStmt>();
         List<BankStmt> lstBankStmts = await (new BankStatementService()).GetBankDetailsICICI();
         lstBankStmtsAll.AddRange(lstBankStmts);
-        lstBankStmts = await (new BankStatementService()).GetBankDetailsAxis();
-        lstBankStmtsAll.AddRange(lstBankStmts);
-        DataTable dataTablePurchases = DataTableConverter.ToDataTable(lstBankStmts);
+        List<BankStmt> lstCitiBankStmts = await (new BankStatementService()).GetBankDetailsCitiBank();
+        DataTable dataTablePurchases = DataTableConverter.ToDataTable(lstCitiBankStmts);
         dsNew.Tables.Add(dataTablePurchases);
 
         return View("Common", dsNew);
