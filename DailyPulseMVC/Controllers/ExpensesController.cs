@@ -51,13 +51,25 @@ public class ExpensesController : Controller
     public async Task<IActionResult> BankStatements()
     {
         DataSet dsNew = new DataSet();
-         List<BankStmt> lstBankStmtsAll = new List<BankStmt>();
         List<BankStmt> lstBankStmts = await (new BankStatementService()).GetBankDetailsICICI();
-        lstBankStmtsAll.AddRange(lstBankStmts);
-        List<BankStmt> lstCitiBankStmts = await (new BankStatementService()).GetBankDetailsCitiBank();
-        DataTable dataTablePurchases = DataTableConverter.ToDataTable(lstCitiBankStmts);
-        dsNew.Tables.Add(dataTablePurchases);
+        lstBankStmts = lstBankStmts.Where(stmt => stmt.BankName == "CITI").ToList();
 
+
+        lstBankStmts = lstBankStmts.Where(stmt => stmt.TxnType == "ToBeFilled").ToList();
+        DataTable dataTablePurchases = DataTableConverter.ToDataTable(lstBankStmts);
+        DataTable summaryTable = new DataTable();
+        summaryTable.Columns.Add("NameOfTable", typeof(string));
+        summaryTable.Columns.Add("CurrentDateTime", typeof(DateTime));
+        summaryTable.Columns.Add("NumberOfRows", typeof(int));
+
+        DataRow summaryRow = summaryTable.NewRow();
+        summaryRow["NameOfTable"] = dataTablePurchases.TableName;
+        summaryRow["CurrentDateTime"] = DateTime.Now;
+        summaryRow["NumberOfRows"] = lstBankStmts.Count;
+
+        summaryTable.Rows.Add(summaryRow);
+        dsNew.Tables.Add(summaryTable);
+        dsNew.Tables.Add(dataTablePurchases);
         return View("Common", dsNew);
     }
 

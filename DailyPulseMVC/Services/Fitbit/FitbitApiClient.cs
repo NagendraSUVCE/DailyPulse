@@ -24,7 +24,7 @@ public class FitbitApiClient
     public string FitbitTokenFileName { get; set; }
     private string _txtPath;
     private string _tempFilePath;
-    private string folderPath ;
+    private string folderPath;
     public FitbitApiClient()
     {
 
@@ -64,12 +64,17 @@ public class FitbitApiClient
                 Console.WriteLine("Refresh failed. Please login interactively at /fitbit/login");
             }
         }
-
-
-            if (File.Exists(_tempFilePath))
-            {
-                File.Delete(_tempFilePath);
-            }
+        DateTime currentDate = new DateTime(2016, 5, 27);
+        while (currentDate <= endDate)
+        {
+            string fetchstepsEveryminute = await TryFetchStepsEveryMinute(accessToken, currentDate);
+            await Task.Delay(1000); // 1-second delay
+            currentDate = currentDate.AddDays(1);
+        }
+        if (File.Exists(_tempFilePath))
+        {
+            File.Delete(_tempFilePath);
+        }
         return stepsDataList;
     }
 
@@ -100,6 +105,48 @@ public class FitbitApiClient
         catch
         {
             return stepsDataList;
+        }
+    }
+
+    private async Task<string> TryFetchStepsEveryMinute(string accessToken, DateTime activityDate)
+    {
+        string dataPath = $@"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/SelfCode/DatabaseInCSV/Fitbit/EveryMinuteStepsData/";
+        string fileName = $"StepsEveryMinute_{activityDate.ToString("yyyy-MM-dd")}.json";
+        string filePath = Path.Combine(dataPath, fileName);
+
+        if (File.Exists(filePath))
+        {
+            Console.WriteLine($"File already exists: {filePath}");
+            return await File.ReadAllTextAsync(filePath);
+        }
+
+        try
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            string url = $"https://api.fitbit.com/1/user/-/activities/steps/date/{activityDate.ToString("yyyy-MM-dd")}/1d/1min.json";
+
+            var response = await client.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Failed to fetch data from Fitbit API. Status Code: {response.StatusCode}");
+                return "";
+            }
+
+            var data = await response.Content.ReadAsStringAsync();
+            Console.WriteLine("Steps Data:\n" + data);
+
+            Directory.CreateDirectory(dataPath); // Ensure the directory exists
+            await File.WriteAllTextAsync(filePath, data);
+
+            return data;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching steps data: {ex.Message}");
+            return "";
         }
     }
 

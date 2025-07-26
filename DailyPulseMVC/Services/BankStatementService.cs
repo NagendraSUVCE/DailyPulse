@@ -162,6 +162,25 @@ public class BankStatementService
                     lstBankStatements.AddRange(GetBankStatementsGivenFilename(strlink
                     , new BankConfig("AXIS", "", "Tran Date", 0, "dd/MM/yyyy hh:mm:ss tt", 0, 2, 3, 4, 5)));
                 }
+
+                baseFolder = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/all Salary/Bank statements/";
+                strLinks.Clear();
+                strLinks.Add(baseFolder + @"CITI/CITI 2010.txt");
+                strLinks.Add(baseFolder + @"CITI/CITI 2011.txt");
+                strLinks.Add(baseFolder + @"CITI/CITI 2012.txt");
+                strLinks.Add(baseFolder + @"CITI/CITI 2013.txt");
+                strLinks.Add(baseFolder + @"CITI/CITI 2014.txt");
+                strLinks.Add(baseFolder + @"CITI/CITI 2015.txt");
+                strLinks.Add(baseFolder + @"CITI/2016 Till march.txt");
+                strLinks.Add(baseFolder + @"CITI/CITI 2016 2017.txt");
+                strLinks.Add(baseFolder + @"CITI/CITI 2017 2018.txt");
+                strLinks.Add(baseFolder + @"CITI/CITI 2018 2019.txt");
+                strLinks.Add(baseFolder + @"CITI/CITI 2019 2020.txt");
+                foreach (var strlink in strLinks)
+                {
+                    lstBankStatements.AddRange(GetBankDetailsCitiBankGivenFileName(strlink).Result);
+                }
+                
             }
             catch (Exception ex)
             {
@@ -174,17 +193,15 @@ public class BankStatementService
 
 
 
-    public async Task<List<BankStmt>> GetBankDetailsCitiBank()
+    public async Task<List<BankStmt>> GetBankDetailsCitiBankGivenFileName(string filePath)
     {
-        var baseFolder = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/all Salary/Bank statements/";
-        string citiFileName = @"CITI/CITI 2019 2020.txt";
         string fulltext = string.Empty;
         List<BankStmt> lstBankStatements = new List<BankStmt>();
         return await Task.Run(async () =>
         {
             try
             {
-                var filePath = Path.Combine(baseFolder, citiFileName);
+                
                 if (File.Exists(filePath))
                 {
                     var lines = File.ReadAllLines(filePath);
@@ -280,30 +297,36 @@ public class BankStatementService
                     bankStmt.TxnDetails = bankStmt.TxnDetails.Trim();
                     bankStmt.Misc = string.Empty;
 
-                    await ProcessBankStatements(bankStmt);
+                   // await ProcessBankStatements(bankStmt);
                 }
                 catch (Exception ex)
                 {
                     bankStmt.TxnDetails = $"Error: {ex.Message}";
                 }
             }
+            await (new ProcessBankStatements()).ProcessBankStatementsRuleBased(lstBankStatements);
             return lstBankStatements;
         });
     }
 
+   
+
+  
+
     public async Task ProcessBankStatements(BankStmt bankStmt)
     {
 
-        if (bankStmt.TxnDetails.StartsWith("SALARY CREDIT ", StringComparison.OrdinalIgnoreCase))
+     if (bankStmt.TxnDetails.StartsWith("CORPORATE CREDIT", StringComparison.OrdinalIgnoreCase))
         {
             bankStmt.TxnType = "Income";
             bankStmt.TxnCategory = "Salary";
-            if (bankStmt.TxnDetails.Contains("MIRPL", StringComparison.OrdinalIgnoreCase))
+            if (bankStmt.TxnDetails.ToLower().Contains("mindtree", StringComparison.OrdinalIgnoreCase))
             {
-                bankStmt.TxnRemarks = "MICROSOFT SALARY";
+                bankStmt.TxnRemarks = "MINDTREE SALARY";
             }
         }
-        else if (bankStmt.TxnDetails.StartsWith("FUND TRANSFER ", StringComparison.OrdinalIgnoreCase)
+        else if (
+            bankStmt.TxnDetails.StartsWith("FUND TRANSFER ", StringComparison.OrdinalIgnoreCase)
         && (bankStmt.TxnDetails.Contains("NEW INDIA ASSURANCE", StringComparison.OrdinalIgnoreCase)))
         {
             bankStmt.TxnType = "Income";
@@ -364,6 +387,57 @@ public class BankStatementService
             bankStmt.TxnType = "Expense";
             bankStmt.TxnCategory = "Rent";
             bankStmt.TxnRemarks = "Chandanagar House Vasantha Kumari";
+        }
+        else if (bankStmt.TxnDetails.ToLower().Contains("atm withdrawal")
+        || bankStmt.TxnDetails.ToLower().Contains("atm cash withdrawal"))
+        {
+            bankStmt.TxnType = "Expense";
+            bankStmt.TxnCategory = "ATM Withdrawal";
+        }
+        else if (bankStmt.TxnDetails.ToLower().Contains("payment for credit card"))
+        {
+            bankStmt.TxnType = "Expense";
+            bankStmt.TxnCategory = "CreditCardPayment";
+            bankStmt.TxnRemarks = "Credit Card Payment";
+        }
+        else if (bankStmt.TxnDetails.Contains("30XX9XXX52"))
+        {
+            bankStmt.TxnType = "Transfer";
+            bankStmt.TxnCategory = "RecurringDeposit";
+            bankStmt.TxnRemarks = "Natesh Central Bank";
+        }
+        else if (bankStmt.TxnDetails.Contains("Cheque No"))
+        {
+            bankStmt.TxnType = "Transfer";
+            bankStmt.TxnCategory = "Transfer";
+            bankStmt.TxnRemarks = " Central Bank";
+        }
+        else if (bankStmt.TxnDetails.Contains("PURCHASE SUBJECT"))
+        {
+            bankStmt.TxnType = "Expenses";
+            bankStmt.TxnCategory = "Purchases";
+            bankStmt.TxnRemarks = "Various";
+        }
+        else if (bankStmt.TxnDetails.Contains("Credited To"))
+        {
+            bankStmt.TxnType = "Expenses";
+            bankStmt.TxnCategory = "ToOthers";
+            bankStmt.TxnRemarks = "Various";
+        }
+        else if (bankStmt.TxnDetails.Contains("MOBILE RECHARGE"))
+        {
+            bankStmt.TxnType = "Expenses";
+            bankStmt.TxnCategory = "Bills";
+            bankStmt.TxnRemarks = "Mobile";
+        }
+        else if (
+            (bankStmt.TxnDetails.StartsWith("IMPS OUTWARD ", StringComparison.OrdinalIgnoreCase)
+            && (bankStmt.TxnDetails.Contains("TRANSFER TO SELF", StringComparison.OrdinalIgnoreCase)
+        )))
+        {
+            bankStmt.TxnType = "Transfer";
+            bankStmt.TxnCategory = "Self";
+            bankStmt.TxnRemarks = "To Nagendra ICICI";
         }
         else
         {
