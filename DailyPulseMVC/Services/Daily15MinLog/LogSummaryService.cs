@@ -7,13 +7,16 @@ using Models.DailyLog;
 
 public class LogSummaryService
 {
-    public DataTable GetCategorySummary(List<DailyLogSummaryForEachDay> logs, List<int> dayRanges)
+    public DataTable GetCategorySummary(List<DailyLogSummaryForEachDay> logs, List<int> dayRanges , Dictionary<string, decimal> targets)
     {
         DataTable table = new DataTable();
         table.Columns.Add("CategoryName", typeof(string));
-        table.Columns.Add("Conclusion", typeof(string));
-        table.Columns.Add("DaysRange", typeof(int));
-        table.Columns.Add("PercentageChange", typeof(decimal));
+
+        // Dynamically add columns for each day range
+        foreach (var range in dayRanges)
+        {
+            table.Columns.Add($"Range_{range}_Days_Summary", typeof(string));
+        }
 
         DateTime today = DateTime.Today;
 
@@ -24,38 +27,48 @@ public class LogSummaryService
             var categoryLogs = logs.Where(l => l.Category == category).ToList();
 
             if (!categoryLogs.Any())
-                continue;
+            continue;
 
             var earliestDate = categoryLogs.Min(l => l.ActivityDate);
-            var totalDays = earliestDate.HasValue 
-                ? (decimal)(today - earliestDate.Value).TotalDays + 1 
-                : 0;
-            var overallDailyAverage = categoryLogs.Sum(l => l.TotalValue) / totalDays;
+            var totalDays = earliestDate.HasValue
+            ? (decimal)(today - earliestDate.Value).TotalDays + 1
+            : 0;
+            var overallDailyAverage = targets.ContainsKey(category) ? targets[category] : 0;
+
+            // Create a new row for the category
+            var row = table.NewRow();
+            row["CategoryName"] = category;
 
             foreach (var range in dayRanges)
             {
-                DateTime rangeStart = today.AddDays(-range);
-                DateTime rangeEnd = today.AddDays(-1); // exclude today
+            DateTime rangeStart = today.AddDays(-range);
+            DateTime rangeEnd = today.AddDays(-1); // exclude today
 
-                var rangeLogs = categoryLogs
-                    .Where(l => l.ActivityDate >= rangeStart && l.ActivityDate <= rangeEnd)
-                    .ToList();
+            var rangeLogs = categoryLogs
+                .Where(l => l.ActivityDate >= rangeStart && l.ActivityDate <= rangeEnd)
+                .ToList();
 
-                decimal rangeAverage = rangeLogs.Sum(l => l.TotalValue);// range;
+            decimal rangeActual = rangeLogs.Sum(l => l.TotalValue);
+            decimal rangeTarget = overallDailyAverage * range;
 
-                decimal overallRangeAverage = overallDailyAverage * range;
+            decimal percentageChange = rangeTarget == 0 ? 0 :
+                ((rangeActual - rangeTarget) / rangeTarget) * 100;
+                // Determine the cell color based on the percentage change
+                string cellColor = percentageChange < 0 
+                    ? "red" 
+                    : (percentageChange > 10 ? "green" : "black");
 
-                decimal percentageChange = overallRangeAverage == 0 ? 0 :
-                    ((rangeAverage - overallRangeAverage) / overallRangeAverage) * 100;
+                // Combine the values into a single string with conditional formatting for the entire cell
+                string summary = $"<span style='color:{cellColor};'>Actual : {rangeActual:F2} ({rangeTarget:F2}) PercDiff : {percentageChange:F2}%</span>";
 
-                string trend = percentageChange > 0 ? "higher" : "lower";
-
-                string conclusion = $"Last {range} day average for {category} is {rangeAverage:F2} and it is {Math.Abs(percentageChange):F0}% {trend} than overall {range}-day average of {overallRangeAverage:F2}";
-
-                table.Rows.Add(category, conclusion, range, percentageChange);
+            // Add the summary to the corresponding column
+            row[$"Range_{range}_Days_Summary"] = summary;
             }
+
+            table.Rows.Add(row);
         }
 
+        table.TableName = "CategorySummaryWithDayRanges";
         return table;
     }
     public DataTable GetCategoryWeeklySummary(List<DailyLogSummaryForEachDay> logs)
