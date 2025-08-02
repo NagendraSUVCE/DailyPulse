@@ -48,7 +48,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var entry in Model)
+        @foreach (var entry in Model.OrderByDescending(e => e.EndTime))
         {
             <tr>
                 <td style="padding: 10px; border: 1px solid #ccc;">@entry.Daily15MinLogId</td>

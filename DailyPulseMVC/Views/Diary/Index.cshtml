@@ -1,0 +1,12 @@
+@model List<DiaryEntry>
+
+<h2>My Diary</h2>
+<a href="/Diary/Create">Add New Entry</a>
+
+@foreach (var entry in Model)
+{
+    <div style="margin-bottom:20px;">
+        <strong>@entry.LoggedTime.ToString("g")</strong>
+        <div>@Html.Raw(entry.DiaryText)</div>
+    </div>
+}
