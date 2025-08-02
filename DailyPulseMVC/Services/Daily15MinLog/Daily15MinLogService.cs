@@ -168,7 +168,7 @@ public class Daily15MinLogService
     public async Task<List<DailyLogSummaryForEachDay>> GetDailyLogSummaryForEachDaysAsync()
     {
         List<DailyLog15Min> lstDailyLog15Min = new List<DailyLog15Min>();
-        var temp = (new Daily15MinLogService()).GetDaily15MinLogAsync().Result;
+        var temp = await GetDaily15MinLogAsync();
         lstDailyLog15Min.AddRange(temp.ToList());
         var categories = new[] { "SelfHelp", "SelfCode", "SelfTech", "SelfSong", "FitbitDailySteps" };
         List<DailyLogSummaryForEachDay> lstDailyLogSummaryForEachDay = GetSummaryForEachDay(lstDailyLog15Min, categories);
@@ -200,32 +200,7 @@ public class Daily15MinLogService
     {
         var categories = new[] { "SelfHelp", "SelfCode", "SelfTech", "SelfSong", "FitbitDailySteps" };
         List<DailyLogSummaryForEachDay> lstDailyLogSummaryForEachDay = await GetDailyLogSummaryForEachDaysAsync();
-        /* List<DailyLog15Min> lstDailyLog15Min = new List<DailyLog15Min>();
-         var temp = (new Daily15MinLogService()).GetDaily15MinLogAsync().Result;
-         lstDailyLog15Min.AddRange(temp.ToList());
-         List<DailyLogSummaryForEachDay> lstDailyLogSummaryForEachDay = GetSummaryForEachDay(lstDailyLog15Min, categories);
-         var fitbitService = new FitbitService();
-         List<StepsData> lstStepsData = await fitbitService.GetAndSaveLatestStepsData();
 
-         foreach (var stepData in lstStepsData)
-         {
-             var matchingEntry = lstDailyLogSummaryForEachDay
-             .FirstOrDefault(summary => summary.ActivityDate.Date == stepData.DateOfActivity && summary.Category == "FitbitDailySteps");
-
-             if (matchingEntry != null)
-             {
-                 matchingEntry.TotalValue = stepData.StepsValue;
-             }
-             else
-             {
-                 lstDailyLogSummaryForEachDay.Add(new DailyLogSummaryForEachDay
-                 {
-                     ActivityDate = stepData.DateOfActivity,
-                     Category = "FitbitDailySteps",
-                     TotalValue = stepData.StepsValue
-                 });
-             }
-         }*/
         // Group data by year and category
         var groupedData = lstDailyLogSummaryForEachDay
             .Where(log => categories.Contains(log.Category))
@@ -329,17 +304,17 @@ public class Daily15MinLogService
 
         var dayRanges = new List<int> { 7, 30, 90, 365 };
 
-        DataTable summaryTable = new LogSummaryService().GetCategorySummary(lstDailyLogSummaryForEachDay, dayRanges);
+        DataTable summaryTable = new LogSummaryService().GetCategorySummary(lstDailyLogSummaryForEachDay, dayRanges, targets);
 
-        // dsNew.Tables.Add(summaryTable);
-        // dsNew.Tables.Add((new LogSummaryService().GetCategoryWeeklySummary(lstDailyLogSummaryForEachDay)));
         dsNew.Tables.Add(streakResultsDatatable);
-        // dsNew.Tables.Add(averageHoursTable);
-        // dsNew.Tables.Add(totalHoursTable);
+        dsNew.Tables.Add(summaryTable);
+        dsNew.Tables.Add((new LogSummaryService().GetCategoryWeeklySummary(lstDailyLogSummaryForEachDay)));
+        dsNew.Tables.Add(averageHoursTable);
+        dsNew.Tables.Add(totalHoursTable);
         dsNew.Tables.Add(weeklyData);
-        // dsNew.Tables.Add(categoriesTotalHrsEachDay);
+        dsNew.Tables.Add(await ValidationsDataTable());
 
-
+        // dsNew.Tables.Add(categoriesTotalHrsEachDay); // This renders too much data page becomes slow. Do not uncomment
         return dsNew;
     }
 
@@ -520,5 +495,37 @@ public class Daily15MinLogService
         }
 
         return summaryList;
+    }
+
+    private async Task<DataTable> ValidationsDataTable()
+    {
+
+        List<DailyLog15Min> lstDailyLog15Min = new List<DailyLog15Min>();
+        var temp = await GetDaily15MinLogAsync();
+        lstDailyLog15Min.AddRange(temp.ToList());
+
+        // Convert the summary list to a DataTable
+        DataTable validationsTable = DataTableConverter.ToDataTable(GetValidations(lstDailyLog15Min));
+        return validationsTable;
+    }
+    private static List<Validations> GetValidations(List<DailyLog15Min> lstDailyLog15Min)
+    {
+        List<Validations> validations = new List<Validations>();
+        var groupedByDate = lstDailyLog15Min
+            .GroupBy(log => log.dtActivity.Date)
+            .Select(group => new { Date = group.Key, Count = group.Count() });
+
+        foreach (var group in groupedByDate)
+        {
+            if (group.Count != 96)
+            {
+            validations.Add(new Validations
+            {
+                ValidationMessage = $"Validation failed for date {group.Date:yyyy-MM-dd}: Expected 96 entries, but found {group.Count}."
+            });
+            }
+        }
+
+        return validations;
     }
 }
