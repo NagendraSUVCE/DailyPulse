@@ -36,4 +36,9 @@ namespace Models.DailyLog
         public DateTime EndDate { get; set; }
         public decimal RequiredToday { get; set; }
     }
+
+    public class Validations
+    {
+        public string ValidationMessage { get; set; }
+    }
 }
