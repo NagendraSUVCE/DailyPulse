@@ -20,6 +20,21 @@ namespace DailyPulseMVC.Services
             _tempFileStepsCSVPath = $"temp_{FitbitStepsFileName}";
             folderPath = @"Nagendra/SelfCode/DatabaseInCSV/Fitbit";
         }
+        public async Task<bool> TryFetchStepsEveryMinuteEvery15Minute()
+        {
+
+            DateTime endDate = DateTime.Today.AddDays(-1); // Yesterday
+            DateTime currentDate = new DateTime(2016, 5, 27);
+            string accessToken = await (new FitbitApiClient()).GetAccessToken();
+            while (currentDate <= endDate)
+            {
+                string fetchstepsEveryminute = await (new FitbitApiClient()).TryFetchStepsEveryMinute(accessToken, currentDate, "1min");
+                string fetchstepsEvery15minute = await (new FitbitApiClient()).TryFetchStepsEveryMinute(accessToken, currentDate, "15min");
+                currentDate = currentDate.AddDays(1);
+            }
+
+            return true;
+        }
         public async Task<List<StepsData>> GetAndSaveLatestStepsData()
         {
             List<StepsData> lstStepsDataFinal = new List<StepsData>();

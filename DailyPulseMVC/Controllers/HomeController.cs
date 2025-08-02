@@ -30,6 +30,36 @@ public class HomeController : Controller
         return View(lstDailyLog15Min);
     }
 
+    public async Task<IActionResult> Daily15MinLogGroupBy()
+    {
+        
+        var lstDailyLog15Min = await (new Daily15MinLogService()).GetDaily15MinLogAsyncForYear2025();
+        DataTable dataTable = new DataTable();
+        dataTable.Columns.Add("StartDate", typeof(DateTime));
+        dataTable.Columns.Add("EndDate", typeof(DateTime));
+        dataTable.Columns.Add("ActivityDesc", typeof(string));
+        dataTable.Columns.Add("TotalHours", typeof(double));
+
+        var groupedData = lstDailyLog15Min
+            .GroupBy(log => log.activityDesc)
+            .Select(group => new
+            {
+            ActivityDesc = group.Key,
+            StartDate = group.Min(log => log.dtActivity),
+            EndDate = group.Max(log => log.dtActivity),
+            TotalHours = group.Sum(log => log.Hrs)
+            })
+            .OrderByDescending(item => item.EndDate);
+
+        foreach (var item in groupedData)
+        {
+            dataTable.Rows.Add(item.StartDate, item.EndDate, item.ActivityDesc, item.TotalHours);
+        }
+        DataSet dataSet = new DataSet();
+        dataSet.Tables.Add(dataTable);
+        return View("Common", dataSet);
+    }
+
     public async Task<IActionResult> ExpensesPending()
     {
         var lstDailyLog15MinExpensesPending = await (new ExpensesService()).GetAllExpensesLogPending();

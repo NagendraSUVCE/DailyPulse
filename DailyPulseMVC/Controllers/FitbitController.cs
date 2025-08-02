@@ -73,4 +73,13 @@ public class FitbitAuthController : Controller
         await Response.WriteAsync(jsonResult);
         
     }
+    [HttpGet("getstepseveryminute")]
+    public async Task GetStepsEveryMinute()
+    {
+        var fitbitService = new FitbitService();
+        bool stepsEveryminute = await fitbitService.TryFetchStepsEveryMinuteEvery15Minute();
+        Response.ContentType = "application/json";
+        await Response.WriteAsync("success");
+        
+    }
 }

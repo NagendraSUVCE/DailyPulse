@@ -38,6 +38,43 @@ public class FitbitApiClient
         folderPath = @"Nagendra/SelfCode/DatabaseInCSV/Fitbit";
     }
 
+    public async Task<string> GetAccessToken()
+    {
+        DateTime startDate = DateTime.Now.AddDays(-7); // Default to 7 days ago
+        DateTime endDate = DateTime.Now; // Default to today
+        string tokenJson = await GetFitbitTokenFromJsonUsingGraph();
+        var tokenObj = JObject.Parse(tokenJson);
+        string accessToken = tokenObj["access_token"]?.ToString();
+        string refreshToken = tokenObj["refresh_token"]?.ToString();
+        List<StepsData> stepsDataList = await TryFetchSteps(accessToken, startDate, endDate);
+        bool success = stepsDataList != null && stepsDataList.Count > 0;
+        if (!success)
+        {
+            Console.WriteLine("Access token failed. Attempting refresh...");
+            string newToken = await RefreshAccessToken(refreshToken);
+            if (newToken != null)
+            {
+                await UploadTokenDataToGraphAsync(newToken);
+                var newAccessToken = JObject.Parse(newToken)["access_token"]?.ToString();
+                stepsDataList = await TryFetchSteps(newAccessToken, startDate, endDate);
+                accessToken = newAccessToken;
+            }
+            else
+            {
+                Console.WriteLine("Refresh failed. Please login interactively at /fitbit/login");
+            }
+
+        }
+        if (string.IsNullOrEmpty(accessToken))
+        {
+            throw new Exception("Access token is null or empty.");
+        }
+        if (File.Exists(_tempFilePath))
+        {
+            File.Delete(_tempFilePath);
+        }
+        return accessToken;
+    }
     public async Task<List<StepsData>> FetchWeeklyStepsAsync(DateTime startDate, DateTime endDate)
     {
         List<StepsData> stepsDataList = new List<StepsData>();
@@ -58,18 +95,12 @@ public class FitbitApiClient
                 await UploadTokenDataToGraphAsync(newToken);
                 var newAccessToken = JObject.Parse(newToken)["access_token"]?.ToString();
                 stepsDataList = await TryFetchSteps(newAccessToken, startDate, endDate);
+                accessToken = newAccessToken;
             }
             else
             {
                 Console.WriteLine("Refresh failed. Please login interactively at /fitbit/login");
             }
-        }
-        DateTime currentDate = new DateTime(2016, 5, 27);
-        while (currentDate <= endDate)
-        {
-            string fetchstepsEveryminute = await TryFetchStepsEveryMinute(accessToken, currentDate);
-            await Task.Delay(1000); // 1-second delay
-            currentDate = currentDate.AddDays(1);
         }
         if (File.Exists(_tempFilePath))
         {
@@ -78,7 +109,7 @@ public class FitbitApiClient
         return stepsDataList;
     }
 
-    private async Task<List<StepsData>> TryFetchSteps(string accessToken, DateTime startDate, DateTime endDate)
+    public async Task<List<StepsData>> TryFetchSteps(string accessToken, DateTime startDate, DateTime endDate)
     {
         List<StepsData> stepsDataList = new List<StepsData>();
         try
@@ -108,10 +139,12 @@ public class FitbitApiClient
         }
     }
 
-    private async Task<string> TryFetchStepsEveryMinute(string accessToken, DateTime activityDate)
+    public async Task<string> TryFetchStepsEveryMinute(string accessToken, DateTime activityDate, string interval)
     {
         string dataPath = $@"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/SelfCode/DatabaseInCSV/Fitbit/EveryMinuteStepsData/";
-        string fileName = $"StepsEveryMinute_{activityDate.ToString("yyyy-MM-dd")}.json";
+        string fileName = interval == "1min"
+            ? $"StepsEveryMinute_{activityDate.ToString("yyyy-MM-dd")}.json"
+            : $"StepsEvery15Minute_{activityDate.ToString("yyyy-MM-dd")}.json";
         string filePath = Path.Combine(dataPath, fileName);
 
         if (File.Exists(filePath))
@@ -124,23 +157,25 @@ public class FitbitApiClient
         {
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-            string url = $"https://api.fitbit.com/1/user/-/activities/steps/date/{activityDate.ToString("yyyy-MM-dd")}/1d/1min.json";
+            string url = interval == "1min"
+                ? $"https://api.fitbit.com/1/user/-/activities/steps/date/{activityDate.ToString("yyyy-MM-dd")}/1d/1min.json"
+                : $"https://api.fitbit.com/1/user/-/activities/steps/date/{activityDate.ToString("yyyy-MM-dd")}/1d/15min.json";
 
             var response = await client.GetAsync(url);
 
             if (!response.IsSuccessStatusCode)
             {
                 Console.WriteLine($"Failed to fetch data from Fitbit API. Status Code: {response.StatusCode}");
-                return "";
+                return "unauthorized";
             }
 
             var data = await response.Content.ReadAsStringAsync();
-            Console.WriteLine("Steps Data:\n" + data);
+            Console.WriteLine("Steps filePath Data:\n" + filePath);
 
             Directory.CreateDirectory(dataPath); // Ensure the directory exists
             await File.WriteAllTextAsync(filePath, data);
 
+            await Task.Delay(1000 * 25); // 25-second delay
             return data;
         }
         catch (Exception ex)
