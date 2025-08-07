@@ -3,14 +3,15 @@ using System.Text.Json;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+using DailyPulseMVC.Services.Diary;
 
 public class DiaryController : Controller
 {
-    private readonly string _filePath = "App_Data/diary.json";
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
-        var entries = LoadEntries();
+        var diaryServiceObj = new DiaryService();
+        var entries = await diaryServiceObj.LoadEntries();
         return View(entries);
     }
 
@@ -21,29 +22,13 @@ public class DiaryController : Controller
     }
 
     [HttpPost]
-    public IActionResult Create(DiaryEntry entry)
+    public async Task<IActionResult> Create(DiaryEntry entry)
     {
+        var diaryServiceObj = new DiaryService();
         entry.LoggedTime = DateTime.Now;
-        var entries = LoadEntries();
+        var entries = await diaryServiceObj.LoadEntries();
         entries.Add(entry);
-        SaveEntries(entries);
+        await diaryServiceObj.SaveEntries(entries);
         return RedirectToAction("Index");
-    }
-
-    private List<DiaryEntry> LoadEntries()
-    {
-        if (!System.IO.File.Exists(_filePath))
-            return new List<DiaryEntry>();
-            var json = System.IO.File.ReadAllText(_filePath);
-            if (string.IsNullOrWhiteSpace(json))
-                return new List<DiaryEntry>();
-            return JsonSerializer.Deserialize<List<DiaryEntry>>(json)?.OrderByDescending(entry => entry.LoggedTime).ToList() ?? new List<DiaryEntry>();
-    }
-
-    private void SaveEntries(List<DiaryEntry> entries)
-    {
-        var json = JsonSerializer.Serialize(entries);
-        Directory.CreateDirectory(Path.GetDirectoryName(_filePath));
-        System.IO.File.WriteAllText(_filePath, json);
     }
 }

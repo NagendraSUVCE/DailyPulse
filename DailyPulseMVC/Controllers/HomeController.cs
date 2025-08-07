@@ -3,7 +3,7 @@ using System.Data;
 using System.Diagnostics;
 using DailyPulseMVC.Models;
 using YahooFinanceApi; // Added namespace for Candle type
-
+using FileManagerOneDrive; // Assuming this namespace contains OnedriveFileManager
 namespace DailyPulseMVC.Controllers;
 
 public class HomeController : Controller
@@ -70,6 +70,15 @@ public class HomeController : Controller
     {
         var filePath = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/allFilesOfNagendraKrishna25Jul2024_2_full_2.xlsx";
         DataSet dataSet = Utility.Excel.ExcelUtilities.GetDataFromExcelNewWay(filePath);
+        return View("Common", dataSet);
+    }
+
+    public async Task<IActionResult> OnedriveFileTotalSize()
+    {
+        var filePath = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/T//Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/T";
+        DataTable dataTable = (new OnedriveFileManager()).GetFolderSizes(filePath);
+        DataSet dataSet = new DataSet();
+        dataSet.Tables.Add(dataTable);
         return View("Common", dataSet);
     }
 
