@@ -294,8 +294,8 @@ public class Daily15MinLogService
 
         // Ensure the class is defined or imported
         // Uncomment and replace the following line with the correct implementation if needed:
-        Daily15MinLogFileService daily15MinLogFileServiceObj = new Daily15MinLogFileService();
-        DataTable streakResultsDatatable = await daily15MinLogFileServiceObj.SaveStreakResultToFile(streakResults);
+        // Daily15MinLogFileService daily15MinLogFileServiceObj = new Daily15MinLogFileService();
+        // DataTable streakResultsDatatable = await daily15MinLogFileServiceObj.SaveStreakResultToFile(streakResults);
 
         // Add both tables to the DataSet
         var dsNew = new DataSet();
@@ -304,15 +304,15 @@ public class Daily15MinLogService
 
         var dayRanges = new List<int> { 7, 30, 90, 365 };
 
-        DataTable summaryTable = new LogSummaryService().GetCategorySummary(lstDailyLogSummaryForEachDay, dayRanges, targets);
+        DataTable summaryTableForDailyRanges = new LogSummaryService().GetCategorySummary(lstDailyLogSummaryForEachDay, dayRanges, targets);
 
-        dsNew.Tables.Add(streakResultsDatatable);
-        dsNew.Tables.Add(summaryTable);
+        dsNew.Tables.Add(summaryTableForDailyRanges);
+        // dsNew.Tables.Add(streakResultsDatatable);
+        dsNew.Tables.Add(await ValidationsDataTable());
         dsNew.Tables.Add((new LogSummaryService().GetCategoryWeeklySummary(lstDailyLogSummaryForEachDay)));
         dsNew.Tables.Add(averageHoursTable);
         dsNew.Tables.Add(totalHoursTable);
         dsNew.Tables.Add(weeklyData);
-        dsNew.Tables.Add(await ValidationsDataTable());
 
         // dsNew.Tables.Add(categoriesTotalHrsEachDay); // This renders too much data page becomes slow. Do not uncomment
         return dsNew;

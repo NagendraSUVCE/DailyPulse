@@ -82,21 +82,6 @@ public class HomeController : Controller
         return View("Common", dataSet);
     }
 
-    /*    public async Task<IActionResult> ExpensesPendingGraph()
-                {
-                    var lstDailyLog15MinExpensesPending = await (new ExpensesService()).GetPayslipsSummarizedGraphWay();
-                    return View("Common", lstDailyLog15MinExpensesPending);
-                }
-
-                public IActionResult Reconciliation()
-                {
-                    DataSet dsNew = new DataSet();
-                    DataTable dt = (new BankStatementService()).ReconcileBankStatementsWithExpenses().Result;
-                    dsNew.Tables.Add(dt);
-
-                    return View("Common", dsNew);
-                }*/
-
     public IActionResult Privacy()
     {
         return View();
