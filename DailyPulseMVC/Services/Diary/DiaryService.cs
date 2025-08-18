@@ -55,6 +55,11 @@ namespace DailyPulseMVC.Services.Diary
             var json = System.IO.File.ReadAllText(_filePath);
             if (string.IsNullOrWhiteSpace(json))
                 return new List<DiaryEntry>();
+
+            if (File.Exists(_tempdiaryFileName))
+            {
+                File.Delete(_tempdiaryFileName);
+            }
             return JsonSerializer.Deserialize<List<DiaryEntry>>(json)?.OrderByDescending(entry => entry.LoggedTime).ToList() ?? new List<DiaryEntry>();
         }
     }

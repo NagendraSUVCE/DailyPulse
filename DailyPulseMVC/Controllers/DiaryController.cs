@@ -25,7 +25,8 @@ public class DiaryController : Controller
     public async Task<IActionResult> Create(DiaryEntry entry)
     {
         var diaryServiceObj = new DiaryService();
-        entry.LoggedTime = DateTime.Now;
+        var istTimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+        entry.LoggedTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, istTimeZone);
         var entries = await diaryServiceObj.LoadEntries();
         entries.Add(entry);
         await diaryServiceObj.SaveEntries(entries);
