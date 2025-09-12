@@ -1,5 +1,6 @@
 
 using System.Data;
+using System.Globalization;
 using Models.DailyLog;
 using Models.Finance;
 
@@ -8,9 +9,10 @@ public class ExpensesService
     public async Task<List<ExpensesCustom>> GetAllExpenses()
 
     {
-         var filePath = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/all Salary/all Payslips/all Payslips Summarized.xlsx";
-         DataSet dataSet = Utility.Excel.ExcelUtilities.GetDataFromExcelNewWay(filePath);
-       // DataSet dataSet = await GetPayslipsSummarizedGraphWay();
+        // var filePathExpensesPending = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/SelfCode/DatabaseInCSV/ExpensesPending.csv";
+        // var filePath = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/all Salary/all Payslips/all Payslips Summarized.xlsx";
+        // DataSet dataSet = Utility.Excel.ExcelUtilities.GetDataFromExcelNewWay(filePath);
+        DataSet dataSet = await GetPayslipsSummarizedGraphWay();
         List<ExpensesCustom> lstExpenses = new List<ExpensesCustom>();
         ExpensesCustom expensesObj = new ExpensesCustom();
         for (int i = 0; i < dataSet.Tables.Count; i++)
@@ -58,17 +60,9 @@ public class ExpensesService
         List<DailyLog15Min> lstDailyLog15MinExpensesPending = new List<DailyLog15Min>();
         var lstDaily15MinLog = (new Daily15MinLogService()).GetDaily15MinLogAsync().Result;
         lstDailyLog15MinExpensesPending = lstDaily15MinLog.Where(log => log.activityDesc != null && log.activityDesc.ToLower().EndsWith("rs")).ToList();
-        // var allExpenses = await GetAllExpenses();
-        // lstDailyLog15MinExpensesPending.RemoveAll(log => 
-        //     allExpenses.Any(exp => 
-        //         exp.Daily15MinLogId.Trim().ToLower() == log.activityDesc.Trim().ToLower() &&
-        //         exp.TxnDate.Date == log.dtActivity.Date
-        //     )
-        // );
-
 
         ExpensesPending expensesPendingObj = new ExpensesPending();
-        expensesPendingObj.ExpensesPendingLogRunDate = DateTime.Now;
+        expensesPendingObj.ExpensesPendingLogRunDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("India Standard Time"));
         expensesPendingObj.InExpenseSheet = 0;
         expensesPendingObj.CompletelyAccounted = 0;
         expensesPendingObj.InDailyLogSheet = lstDaily15MinLog.Count(log => log.activityDesc != null && log.activityDesc.ToLower().EndsWith("rs"));
@@ -77,8 +71,9 @@ public class ExpensesService
         expensesPendingObj.ExpenseLoggingAutomatic = 0;
         expensesPendingObj.ExpenseMisc = "ToBeFilledVisualStudioCode";
 
-        var filePathExpenses = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/all Salary/all Payslips/all Payslips Summarized.xlsx";
-        DataSet dataSetExpenses = Utility.Excel.ExcelUtilities.GetDataFromExcelNewWay(filePathExpenses);
+        // var filePathExpenses = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/all Salary/all Payslips/all Payslips Summarized.xlsx";
+        // DataSet dataSetExpenses = Utility.Excel.ExcelUtilities.GetDataFromExcelNewWay(filePathExpenses);
+        DataSet dataSetExpenses = await GetPayslipsSummarizedGraphWay();
         DataTable dataTableExpenses = dataSetExpenses.Tables[0];
         for (int i = 0; i < dataSetExpenses.Tables.Count; i++)
         {
@@ -92,8 +87,8 @@ public class ExpensesService
                     var activityDesc = dtExpense.Rows[j][1].ToString();
                     var expensesDesc = dtExpense.Rows[j][2].ToString();
                     if (string.IsNullOrEmpty(expensesDesc) ||
-                        expensesDesc.Equals("ToBeFilledVisualStudioCode", StringComparison.OrdinalIgnoreCase) ||
-                        expensesDesc.StartsWith("ToBefilled", StringComparison.OrdinalIgnoreCase))
+                        expensesDesc.Contains("ToBeFilledVisualStudioCode", StringComparison.OrdinalIgnoreCase) ||
+                        expensesDesc.Contains("ToBefilled", StringComparison.OrdinalIgnoreCase))
                     {
                         expensesPendingObj.AccountingPending++;
                     }
@@ -119,53 +114,205 @@ public class ExpensesService
             expensesObj.TxnDate = log.dtActivity;
             expensesObj.Daily15MinLogId = log.activityDesc;
             expensesObj.ExpneseDescription = "ToBeFilledVisualStudioCode";
-            Utility.Excel.ExcelUtilities.UpdateExpensesPendingObject(expensesObj);
+            UpdateExpensesPendingObject(expensesObj);
             expensesPendingObj.ExpensesLoggingPending++;
             expensesPendingObj.ExpenseLoggingAutomatic++;
+            expensesPendingObj.AccountingPending++; // bug fix - since these are not in expenses sheet either
             lstExpenses.Add(expensesObj);
         }
-        var filePathExpensesPending = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/SelfCode/DatabaseInCSV/ExpensesPending.csv";
 
-        Utility.Excel.ExcelUtilities.CreateCsvFromList(lstExpenses, filePathExpensesPending);
-        var filePathExpensesPendingSummary = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/SelfCode/DatabaseInCSV/ExpensesPendingSummary.csv";
+        var folderPath = @"Nagendra/SelfCode/DatabaseInCSV";
 
-        // Prepare the line to append
-        var lineToAppend = $"{expensesPendingObj.ExpensesPendingLogRunDate},{expensesPendingObj.InExpenseSheet},{expensesPendingObj.CompletelyAccounted},{expensesPendingObj.InDailyLogSheet},{expensesPendingObj.AccountingPending},{expensesPendingObj.ExpensesLoggingPending},{expensesPendingObj.ExpenseLoggingAutomatic},{expensesPendingObj.ExpenseMisc}";
+        string filePathExpensesPending = "ExpensesPending.csv";
+        string temp_filePathExpensesPending = "temp_ExpensesPending.csv";
+        CreateCsvFromList(lstExpenses, temp_filePathExpensesPending);
+        await GraphFileUtility.UploadFile(folderPath, filePathExpensesPending, temp_filePathExpensesPending);
 
-        // Check if the file exists
-        if (!File.Exists(filePathExpensesPendingSummary))
-        {
-            // Create the file and write the header and the first line
-            var header = "ExpensesPendingLogRunDate,InExpenseSheet,CompletelyAccounted,InDailyLogSheet,AccountingPending,ExpensesLoggingPending,ExpenseLoggingAutomatic,ExpenseMisc";
-            File.WriteAllLines(filePathExpensesPendingSummary, new[] { header, lineToAppend });
-        }
-        else
-        {
-            // Append the line to the existing file
-            File.AppendAllText(filePathExpensesPendingSummary, lineToAppend + Environment.NewLine);
-        }
+        string expensesPendingSummaryCSVFilePath = "ExpensesPendingSummary.csv";
+        string temp_expensesPendingSummaryCSVFilePath = "Temp_ExpensesPendingSummary.csv";
+        await GraphFileUtility.CreateTemporaryFileInLocal(folderPath, expensesPendingSummaryCSVFilePath, temp_expensesPendingSummaryCSVFilePath);
+        AppendExpensesPendingDataToCsv(temp_expensesPendingSummaryCSVFilePath, new List<ExpensesPending> { expensesPendingObj });
+        await GraphFileUtility.UploadFile(folderPath, expensesPendingSummaryCSVFilePath, temp_expensesPendingSummaryCSVFilePath);
 
+               if (File.Exists(temp_filePathExpensesPending))
+            {
+                File.Delete(temp_filePathExpensesPending);
+            }
+
+               if (File.Exists(temp_expensesPendingSummaryCSVFilePath))
+            {
+                File.Delete(temp_expensesPendingSummaryCSVFilePath);
+            }
         return lstDailyLog15MinExpensesPending;
     }
 
 
-        public async Task<System.Data.DataSet> GetPayslipsSummarizedGraphWay()
+    public async Task<System.Data.DataSet> GetPayslipsSummarizedGraphWay()
+    {
+        var tempFilePath = "payslips.xlsx";
+        var fileName = "all Payslips Summarized.xlsx";
+        var folderPath = @"Nagendra/all Salary/all Payslips";
+        System.Data.DataSet ds = null;
+        try
         {
-            var tempFilePath = "payslips.xlsx";
-            var fileName = "all Payslips Summarized.xlsx";
-            var folderPath = @"Nagendra/all Salary/all Payslips";
-            System.Data.DataSet ds = null;
-            try
-            {
-                await GraphFileUtility.CreateTemporaryFileInLocal(folderPath, fileName, tempFilePath);
-                ds = GraphFileUtility.GetDataFromExcelNewWayUseHeader(tempFilePath);
+            await GraphFileUtility.CreateTemporaryFileInLocal(folderPath, fileName, tempFilePath);
+            ds = GraphFileUtility.GetDataFromExcelNewWayUseHeader(tempFilePath);
 
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
-            return ds;
         }
+        catch (Exception ex)
+        {
+            throw;
+        }
+        return ds;
+    }
 
+    private void UpdateExpensesPendingObject(ExpensesCustom expensesCustom)
+    {
+        if (expensesCustom != null)
+        {
+            if (expensesCustom.Daily15MinLogId.ToLower().Contains("-food-"))
+                expensesCustom.ExpenseCategory = "Food";
+            else if (expensesCustom.Daily15MinLogId.ToLower().Contains("-bills-"))
+                expensesCustom.ExpenseCategory = "Bills";
+            else if (expensesCustom.Daily15MinLogId.ToLower().Contains("-travel-"))
+                expensesCustom.ExpenseCategory = "Travel";
+
+            var subCategoryMappings = new Dictionary<string, string>
+                {
+                    { "-eatoutside-", "EatOutside" },
+                    { "-grocery-", "Grocery" },
+                    { "-local-", "Local" },
+                    { "-entertainment-", "Entertainment" },
+                    { "-intercity-", "InterCity" },
+                    { "-rent-", "Rent" },
+                    { "-medicines-", "Medicines" },
+                    { "-electricity-", "Electricity" },
+                    { "-internet-", "Internet" },
+                    { "-water-", "Water" },
+                    { "-mobile-", "Mobile" },
+                    { "-gas-", "Gas" },
+                    { "-fuel-", "Fuel" },
+                    { "-storage-", "Storage" },
+                    { "-clothes-", "Clothes" },
+                    { "-other-", "Other" }
+                };
+
+            foreach (var mapping in subCategoryMappings)
+            {
+                if (expensesCustom.Daily15MinLogId.ToLower().Contains(mapping.Key))
+                {
+                    expensesCustom.ExpenseSubCategory = mapping.Value;
+                    break;
+                }
+            }
+
+
+
+            if (expensesCustom.Daily15MinLogId.ToLower().Contains("-paytmicici-"))
+                expensesCustom.ExpensePaymentType = "PaytmICICI";
+            else if (expensesCustom.Daily15MinLogId.ToLower().Contains("-paytm-"))
+                expensesCustom.ExpensePaymentType = "Paytm";
+            else if (expensesCustom.Daily15MinLogId.ToLower().Contains("-rajanigpay-"))
+                expensesCustom.ExpensePaymentType = "RajaniGPAY";
+            else if (expensesCustom.Daily15MinLogId.ToLower().Contains("-nagendraciti-"))
+                expensesCustom.ExpensePaymentType = "NagendraCITI";
+            else if (expensesCustom.Daily15MinLogId.ToLower().Contains("-metrocard-"))
+                expensesCustom.ExpensePaymentType = "MetroCard";
+            else if (expensesCustom.Daily15MinLogId.ToLower().Contains("-cash-"))
+                expensesCustom.ExpensePaymentType = "Cash";
+
+            if (expensesCustom.Daily15MinLogId.ToLower().Contains("-taazakitchen-"))
+                expensesCustom.ExpenseVendor = "TaazaKitchen";
+            else if (expensesCustom.Daily15MinLogId.ToLower().Contains("-coffeethindi-"))
+                expensesCustom.ExpenseVendor = "CoffeeThindi";
+            else if (expensesCustom.Daily15MinLogId.ToLower().Contains("-swiggy-"))
+                expensesCustom.ExpenseVendor = "Swiggy";
+            else if (expensesCustom.Daily15MinLogId.ToLower().Contains("rapido"))
+                expensesCustom.ExpenseVendor = "Rapido";
+            else if (expensesCustom.Daily15MinLogId.ToLower().Contains("nammayatri"))
+                expensesCustom.ExpenseVendor = "NammaYatri";
+            else if (expensesCustom.Daily15MinLogId.ToLower().Contains("nammametro"))
+                expensesCustom.ExpenseVendor = "NammaMetro";
+            else if (expensesCustom.Daily15MinLogId.ToLower().Contains("-auto-"))
+                expensesCustom.ExpenseVendor = "Auto";
+            else if (expensesCustom.Daily15MinLogId.ToLower().Contains("akshayakalpa"))
+                expensesCustom.ExpenseVendor = "AkshayaKalpa";
+            else if (expensesCustom.Daily15MinLogId.ToLower().Contains("hydmetro"))
+                expensesCustom.ExpenseVendor = "HydMetro";
+
+
+            if (expensesCustom.Daily15MinLogId.ToLower().EndsWith("rs"))
+            {
+                var parts = expensesCustom.Daily15MinLogId.Split('-');
+                var lastPart = parts.LastOrDefault();
+                lastPart = lastPart?.Trim().ToLower();
+                if (lastPart != null && lastPart.EndsWith("rs"))
+                {
+                    var amountString = lastPart.Substring(0, lastPart.Length - 2); // Remove "rs"
+                    if (decimal.TryParse(amountString, out var amount))
+                    {
+                        expensesCustom.ExpenseAmt = amount;
+                    }
+                }
+            }
+        }
+    }
+
+
+    public void AppendExpensesPendingDataToCsv(string filePath, List<ExpensesPending> expensesPendingList)
+    {
+        bool fileExists = File.Exists(filePath);
+
+        using (var writer = new StreamWriter(filePath, append: true))
+        {
+            if (!fileExists)
+            {
+                // Create the file and write the header and the first line
+                var header = "ExpensesPendingLogRunDate,InExpenseSheet,CompletelyAccounted,InDailyLogSheet,AccountingPending,ExpensesLoggingPending,ExpenseLoggingAutomatic,ExpenseMisc";
+                writer.WriteLine(header);
+            }
+
+            foreach (var expensesPendingObj in expensesPendingList)
+            {   // Prepare the line to append
+                var lineToAppend = $"{expensesPendingObj.ExpensesPendingLogRunDate.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)},{expensesPendingObj.InExpenseSheet},{expensesPendingObj.CompletelyAccounted},{expensesPendingObj.InDailyLogSheet},{expensesPendingObj.AccountingPending},{expensesPendingObj.ExpensesLoggingPending},{expensesPendingObj.ExpenseLoggingAutomatic},{expensesPendingObj.ExpenseMisc}";
+
+                writer.WriteLine(lineToAppend);
+            }
+        }
+    }
+
+    private void CreateCsvFromList(List<ExpensesCustom> lstDailyLog15Min, string filePath)
+    {
+        using (var writer = new StreamWriter(filePath))
+        {
+            // Add headers
+            writer.WriteLine("Date,Id,Description");
+
+            // Add data
+            foreach (var log in lstDailyLog15Min)
+            {
+                var line = $"{log.TxnDate.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)},{log.Daily15MinLogId},{log.ExpneseDescription},{log.ExpenseCategory},{log.ExpenseSubCategory},{log.ExpensePaymentType},{log.ExpenseVendor},{log.ExpenseAmt}";
+                writer.WriteLine(line);
+            }
+        }
+    }
+
+    /* 
+    var filePathExpensesPendingSummary = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/SelfCode/DatabaseInCSV/ExpensesPendingSummary.csv";
+
+    // Prepare the line to append
+    var lineToAppend = $"{expensesPendingObj.ExpensesPendingLogRunDate.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)},{expensesPendingObj.InExpenseSheet},{expensesPendingObj.CompletelyAccounted},{expensesPendingObj.InDailyLogSheet},{expensesPendingObj.AccountingPending},{expensesPendingObj.ExpensesLoggingPending},{expensesPendingObj.ExpenseLoggingAutomatic},{expensesPendingObj.ExpenseMisc}";
+
+    // Check if the file exists
+    if (!File.Exists(filePathExpensesPendingSummary))
+    {
+        // Create the file and write the header and the first line
+        var header = "ExpensesPendingLogRunDate,InExpenseSheet,CompletelyAccounted,InDailyLogSheet,AccountingPending,ExpensesLoggingPending,ExpenseLoggingAutomatic,ExpenseMisc";
+        File.WriteAllLines(filePathExpensesPendingSummary, new[] { header, lineToAppend });
+    }
+    else
+    {
+        // Append the line to the existing file
+        File.AppendAllText(filePathExpensesPendingSummary, lineToAppend + Environment.NewLine);
+    }*/
 }

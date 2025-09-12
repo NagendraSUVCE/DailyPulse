@@ -33,7 +33,24 @@ public class StockPriceController : Controller
     {
         DataSet dsNew = new DataSet();
         var symbols = new List<string> { "MSFT", "0P0000XVJQ.BO" }; // List of stock symbols
-        /*
+        
+        dsNew = await (new StockFileService()).GetMSFTPurchasesFromPayslipSummarized();
+        return View("Common", dsNew);
+    }
+    public async Task<IActionResult> ListOfStockPurchases()
+    {
+        DataSet dsNew = new DataSet();
+        var symbols = new List<string> { "MSFT", "0P0000XVJQ.BO" }; // List of stock symbols
+
+        List<StockPurchase> lstPurchases = await (new StockFileService()).GetStockPurchases();
+        DataTable dataTablePurchases = DataTableConverter.ToDataTable(lstPurchases);
+        dsNew.Tables.Add(dataTablePurchases);
+        return View("Common", dsNew);
+    }
+     public async Task<IActionResult> GetHistoricalPriceGivenStock()
+    {
+        DataSet dsNew = new DataSet();
+        var symbols = new List<string> { "MSFT", "0P0000XVJQ.BO" }; // List of stock symbols
         var periods = new List<YahooFinanceApi.Period>
         {
             YahooFinanceApi.Period.Daily,
@@ -58,18 +75,7 @@ public class StockPriceController : Controller
                 periodData[period] = candles;
             }
             historicalData[symbol] = periodData;
-        }*/
-        dsNew = await (new StockFileService()).GetMSFTPurchasesFromPayslipSummarized();
-        return View("Common", dsNew);
-    }
-    public async Task<IActionResult> ListOfStockPurchases()
-    {
-        DataSet dsNew = new DataSet();
-        var symbols = new List<string> { "MSFT", "0P0000XVJQ.BO" }; // List of stock symbols
-
-        List<StockPurchase> lstPurchases = await (new StockFileService()).GetStockPurchases();
-        DataTable dataTablePurchases = DataTableConverter.ToDataTable(lstPurchases);
-        dsNew.Tables.Add(dataTablePurchases);
+        }
         return View("Common", dsNew);
     }
 }

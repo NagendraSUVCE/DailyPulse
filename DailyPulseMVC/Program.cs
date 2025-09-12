@@ -1,3 +1,5 @@
+using Microsoft.Extensions.FileProviders;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -26,5 +28,16 @@ app.MapControllerRoute(
     pattern: "{controller=Expenses}/{action=BankStatements}/{id?}")
     .WithStaticAssets();
 
+
+// Enable static files
+app.UseStaticFiles();
+
+// Enable directory browsing
+app.UseDirectoryBrowser(new DirectoryBrowserOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "sounds")),
+    RequestPath = "/sounds"
+});
 
 app.Run();
