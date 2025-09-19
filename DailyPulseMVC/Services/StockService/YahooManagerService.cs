@@ -1,6 +1,25 @@
 using YahooFinanceApi;
 public class YahooFinanceService
 {
+    public async Task<Candle> GetLatestPriceGivenStock(string stockSymbol)
+    {
+        var securities = await GetHistoricalPriceGivenStock(stockSymbol, DateTime.Now.AddDays(-5), DateTime.Now, Period.Daily);
+        if (securities == null || securities.Count == 0)
+        {
+            throw new Exception($"No data found for stock symbol: {stockSymbol}");
+        }
+        return securities.Last();
+    }
+    public async Task<Candle> GetPriceGivenStockOnGivenDate(string stockSymbol, DateTime givenDate)
+    {
+        var securities = await GetHistoricalPriceGivenStock(stockSymbol, givenDate.AddDays(-5), givenDate, Period.Daily);
+        if (securities == null || securities.Count == 0)
+        {
+            throw new Exception($"No data found for stock symbol: {stockSymbol}");
+        }
+        return securities.Last();
+    }
+
     public async Task<List<Candle>> GetHistoricalPriceGivenStock(string stockSymbol, DateTime startDate, DateTime endDate, Period per)
     {
         // You should be able to query data from various markets including US, HK, TW

@@ -86,7 +86,7 @@
             const istStartTime = new Date(startTime.getTime() + istOffset);
             document.getElementById("startTime").value = istStartTime.toISOString().slice(0, 19).replace("T", " ");
 
-            let duration = 0.25 * 60;// 7;//25 * 60; // 25 minutes
+            let duration = 25 * 60;// 7;//25 * 60; // 25 minutes
             let display = document.getElementById("timerDisplay");
 
             const endTime = new Date(startTime.getTime() + duration * 1000);

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 public class StockFileService
 {
-    public async Task<List<StockPurchase>> GetStockPurchases()
+    public async Task<List<StockPurchase>> GetStockPurchasesMSFT()
     {
         DataSet dsMSFTShares = await GetMSFTPurchasesFromPayslipSummarized();
         List<StockPurchase> stockPurchases = new List<StockPurchase>();
@@ -36,6 +36,58 @@ public class StockFileService
                 // Log unexpected errors
                 Console.WriteLine($"An error occurred while processing row: {ex.Message}");
             }
+        foreach (var sp in stockPurchases)
+        {
+            // Assuming Candle is a placeholder for a valid type, replace it with the correct type or define it.
+            var latestCandleINRUSDExchange = await (new YahooFinanceService()).GetPriceGivenStockOnGivenDate("INR=X", sp.PurchaseDate.Value);
+            sp.ExchangeRate = latestCandleINRUSDExchange.Close;
+            sp.TotalPurchaseValue = sp.Quantity * sp.PurchasePrice * sp.ExchangeRate;
+        }
+        return stockPurchases;
+    }
+    public async Task<List<StockPurchase>> GetStockPurchasesMutualFunds()
+    {
+        DataSet dsMutualFunds = await GetMutualFundsSummary();
+        List<StockPurchase> stockPurchases = new List<StockPurchase>();
+        StockPurchase stockPurchase = null;
+        foreach (DataRow row in dsMutualFunds.Tables[0].Rows)
+        {
+            try
+            {
+                DateTime purchaseDate;
+                if (DateTime.TryParseExact(row["TRADE_DATE"].ToString(), "dd-MMM-yyyy", null, System.Globalization.DateTimeStyles.None, out purchaseDate))
+                {
+                    // Successfully parsed purchaseDate
+                }
+                else
+                {
+                    purchaseDate = DateTime.MinValue;
+                }
+                if (purchaseDate != DateTime.MinValue)
+                {
+                    stockPurchase = new StockPurchase
+                    {
+                        Symbol = row["PRODUCT_CODE"]?.ToString() ?? "",
+                        StockName = row["SCHEME_NAME"]?.ToString() ?? "",
+                        Quantity = row["UNITS"] != DBNull.Value ? Convert.ToDecimal(row["UNITS"]) : 0,
+                        PurchasePrice = row["PRICE"] != DBNull.Value ? Convert.ToDecimal(row["PRICE"]) : 0,
+                        TotalPurchaseValue = row["AMOUNT"] != DBNull.Value ? Convert.ToDecimal(row["AMOUNT"]) : 0,
+                        PurchaseDate = purchaseDate
+                    };
+                    stockPurchases.Add(stockPurchase);
+                }
+            }
+            catch (InvalidCastException ex)
+            {
+                // Log the error and continue processing other rows
+                Console.WriteLine($"Invalid data format in row: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                // Log unexpected errors
+                Console.WriteLine($"An error occurred while processing row: {ex.Message}");
+            }
+        }
         return stockPurchases;
     }
 
@@ -54,5 +106,55 @@ public class StockFileService
         DataSet dsNew = new DataSet();
         dsNew.Tables.Add(dataTable1.Copy());
         return dsNew;
+    }
+    public async Task<DataSet> GetMutualFundsSummary()
+    {
+        var fileName = "CAMS_Summary.xlsx";
+        var tempFilePath = $"temp_{fileName}";
+        var folderPath = @"Nagendra/SelfCode/DatabaseInCSV";
+        System.Data.DataSet ds = null;
+        try
+        {
+            await GraphFileUtility.CreateTemporaryFileInLocal(folderPath, fileName, tempFilePath);
+            ds = GraphFileUtility.GetDataFromExcelNewWayUseHeader(tempFilePath);
+
+        }
+        catch (Exception ex)
+        {
+            throw;
+        }
+        finally
+        {
+            if (File.Exists(tempFilePath))
+            {
+                File.Delete(tempFilePath);
+            }
+        }
+        return ds;
+    }
+    public async Task<DataSet> GetMutualFundsDetail()
+    {
+        var fileName = "CAMS_Detail.xlsx";
+        var tempFilePath = $"temp_{fileName}";
+        var folderPath = @"Nagendra/SelfCode/DatabaseInCSV";
+        System.Data.DataSet ds = null;
+        try
+        {
+            await GraphFileUtility.CreateTemporaryFileInLocal(folderPath, fileName, tempFilePath);
+            ds = GraphFileUtility.GetDataFromExcelNewWayUseHeader(tempFilePath);
+
+        }
+        catch (Exception ex)
+        {
+            throw;
+        }
+        finally
+        {
+            if (File.Exists(tempFilePath))
+            {
+                File.Delete(tempFilePath);
+            }
+        }
+        return ds;
     }
 }
