@@ -21,7 +21,7 @@ public class StockNetworthService
 
         DataSet dsNew = new DataSet(); decimal netWorthInINR = 0;
         var symbols = new List<string> { "MSFT", "0P0000XVJQ.BO" }; // List of stock symbols
-        lstPurchases ??= await (new StockFileService()).GetStockPurchases();
+        lstPurchases ??= await (new StockFileService()).GetStockPurchasesMSFT();
         Candle latestCandle = await (new YahooFinanceService()).GetPriceGivenStockOnGivenDate(stockSymbol, givenDate.Value);
         Candle latestCandleINRUSDExchange = await (new YahooFinanceService()).GetPriceGivenStockOnGivenDate("INR=X", givenDate.Value);
 
@@ -51,6 +51,6 @@ public class StockNetworthService
 
     private async Task FillInAllRequiredDetails()
     {
-        lstPurchases ??= await (new StockFileService()).GetStockPurchases();
+        lstPurchases ??= await (new StockFileService()).GetStockPurchasesMSFT();
     }
 }

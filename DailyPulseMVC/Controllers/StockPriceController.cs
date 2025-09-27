@@ -106,12 +106,12 @@ public class StockPriceController : Controller
         return View("Common", dsNew);
     }
     // http://localhost:5278/stockprice/GetLatestNetworth?stockSymbol=MSFT
-    public async Task<String> GetLatestNetworth(string stockSymbol = "MSFT")
+    public async Task<Object> GetLatestNetworth(string stockSymbol = "MSFT")
     {
         var stockNetworthGivenDate = await (new StockNetworthService()).GetLatestNetworthForGivenDate(stockSymbol, DateTime.Now);
         string networthDetails = System.Text.Json.JsonSerializer.Serialize(stockNetworthGivenDate);
         _logger.LogInformation(networthDetails);
-        return networthDetails;
+        return stockNetworthGivenDate;
     }
     // http://localhost:5278/stockprice/GetLatestNetworthForGivenDate?stockSymbol=MSFT&givenDateString=2023-10-01
     public async Task<StockNetworth> GetLatestNetworthForGivenDate(string stockSymbol = "MSFT", string givenDateString = null)
