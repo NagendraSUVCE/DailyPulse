@@ -17,7 +17,8 @@ public class YahooFinanceService
         {
             throw new Exception($"No data found for stock symbol: {stockSymbol}");
         }
-        return securities.Last();
+        return securities.LastOrDefault(c => c.AdjustedClose > 0) 
+               ?? throw new Exception($"No valid data found for stock symbol: {stockSymbol} on the given date.");
     }
 
     public async Task<List<Candle>> GetHistoricalPriceGivenStock(string stockSymbol, DateTime startDate, DateTime endDate, Period per)

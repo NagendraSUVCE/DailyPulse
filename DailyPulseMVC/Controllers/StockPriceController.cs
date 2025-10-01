@@ -12,9 +12,22 @@ public class StockPriceController : Controller
     // dotnet publish -c Release -o ./bin/Publish
     private readonly ILogger<Daily15MinLogController> _logger;
 
+    private readonly StockFileService _stockFileService;
+    private readonly StockNetworthService _stockNetworthService;
+    private readonly YahooFinanceService _yahooFinanceService;
+    private readonly MutualFundService _mutualFundService;
+
     public StockPriceController(ILogger<Daily15MinLogController> logger)
     {
         _logger = logger;
+        if (_stockFileService == null)
+            _stockFileService = new StockFileService();
+        if (_stockNetworthService == null)
+            _stockNetworthService = new StockNetworthService();
+        if (_yahooFinanceService == null)
+            _yahooFinanceService = new YahooFinanceService();
+        if (_mutualFundService == null)
+            _mutualFundService = new MutualFundService();
     }
     public async Task<String> Index()
     {
@@ -34,62 +47,21 @@ public class StockPriceController : Controller
         DataSet dsNew = new DataSet();
         var symbols = new List<string> { "MSFT", "0P0000XVJQ.BO" }; // List of stock symbols
 
-        dsNew = await (new StockFileService()).GetMSFTPurchasesFromPayslipSummarized();
+        dsNew = await _stockFileService.GetMSFTPurchasesFromPayslipSummarized();
         return View("Common", dsNew);
     }
-    public async Task<IActionResult> ListOfStockPurchases()
-    {
-        DataSet dsNew = new DataSet();
-        var symbols = new List<string> { "MSFT", "0P0000XVJQ.BO" }; // List of stock symbols
-
-        List<StockPurchase> lstPurchases = await (new StockFileService()).GetStockPurchasesMSFT();
-        lstPurchases.AddRange(await (new StockFileService()).GetStockPurchasesMutualFunds());
-        DataTable dataTablePurchases = DataTableConverter.ToDataTable(lstPurchases);
-        var summarizedPurchases = lstPurchases
-            .GroupBy(p => p.StockName)
-            .Select(g => new
-            {
-                StockName = g.Key,
-                TotalQuantity = g.Sum(p => p.Quantity),
-                TotalPurchasePrice = g.Sum(p => p.TotalPurchaseValue),
-                FirstPurchaseDate = g.Min(p => p.PurchaseDate),
-                LastPurchaseDate = g.Max(p => p.PurchaseDate)
-            })
-            .ToList();
-
-        DataTable dataTableSummary = DataTableConverter.ToDataTable(summarizedPurchases);
-
-        // Calculate the sum of TotalPurchaseValue ignoring negative values
-        decimal totalPurchaseValueSum = lstPurchases
-            .Where(p => p.TotalPurchaseValue.HasValue && p.TotalPurchaseValue > 0)
-            .Sum(p => p.TotalPurchaseValue ?? 0);
-
-        // Create a new DataTable to hold the sum
-        DataTable totalPurchaseValueTable = new DataTable("TotalPurchaseValueSummary");
-        totalPurchaseValueTable.Columns.Add("TotalPurchaseValue", typeof(decimal));
-
-        // Add a single row with the calculated sum
-        DataRow row = totalPurchaseValueTable.NewRow();
-        row["TotalPurchaseValue"] = totalPurchaseValueSum;
-        totalPurchaseValueTable.Rows.Add(row);
-
-        // Add the new table to the DataSet
-        dsNew.Tables.Add(totalPurchaseValueTable);
-
-        dsNew.Tables.Add(dataTableSummary);
-        dsNew.Tables.Add(dataTablePurchases);
-        return View("Common", dsNew);
-    }
+    //http://localhost:5278/stockprice/ListOfStockPurchases
+    
     public async Task<IActionResult> ListOfStockPurchasesMutualFunds()
     {
         DataSet dsNew = new DataSet();
-        dsNew = await (new StockFileService()).GetMutualFundsSummary();
+        dsNew = await _stockFileService.GetMutualFundsSummary();
         return View("Common", dsNew);
     }
     public async Task<IActionResult> ListOfStockPurchasesMutualFundsDetail()
     {
         DataSet dsNew = new DataSet();
-        dsNew = await (new StockFileService()).GetMutualFundsDetail();
+        dsNew = await _stockFileService.GetMutualFundsDetail();
         return View("Common", dsNew);
     }
     // http://localhost:5278/stockprice/GetLatestPriceGivenStock?stockSymbol=MSFT
@@ -97,8 +69,10 @@ public class StockPriceController : Controller
     {
         DataSet dsNew = new DataSet();
         var symbols = new List<string> { "MSFT", "0P0000XVJQ.BO" }; // List of stock symbols
-
-        Candle latestCandle = await (new YahooFinanceService()).GetLatestPriceGivenStock(stockSymbol);
+        /*
+            HDFC Mid Cap Dir Gr         (0P0000XW8F.BO)     118989
+        */
+        Candle latestCandle = await _yahooFinanceService.GetLatestPriceGivenStock(stockSymbol);
         List<Candle> lstLatestCandle = new List<Candle>();
         lstLatestCandle.Add(latestCandle);
         DataTable dataTableLatestCandle = DataTableConverter.ToDataTable(lstLatestCandle);
@@ -108,7 +82,7 @@ public class StockPriceController : Controller
     // http://localhost:5278/stockprice/GetLatestNetworth?stockSymbol=MSFT
     public async Task<Object> GetLatestNetworth(string stockSymbol = "MSFT")
     {
-        var stockNetworthGivenDate = await (new StockNetworthService()).GetLatestNetworthForGivenDate(stockSymbol, DateTime.Now);
+        var stockNetworthGivenDate = await _stockNetworthService.GetLatestNetworthForGivenDate(stockSymbol, DateTime.Now);
         string networthDetails = System.Text.Json.JsonSerializer.Serialize(stockNetworthGivenDate);
         _logger.LogInformation(networthDetails);
         return stockNetworthGivenDate;
@@ -121,17 +95,17 @@ public class StockPriceController : Controller
         {
             givenDate = DateTime.Now;
         }
-        var stockNetworthGivenDate = await (new StockNetworthService()).GetLatestNetworthForGivenDate(stockSymbol, givenDate);
+        var stockNetworthGivenDate = await _stockNetworthService.GetLatestNetworthForGivenDate(stockSymbol, givenDate);
 
         // Log the calculated net worth
         string networthValue = System.Text.Json.JsonSerializer.Serialize(stockNetworthGivenDate);
 
         return stockNetworthGivenDate;
     }
- // http://localhost:5278/stockprice/GetMutualFundNAV
-public async Task<List<NAVData>> GetMutualFundNAV()
+    // http://localhost:5278/stockprice/GetMutualFundNAV
+    public async Task<List<NAVData>> GetMutualFundNAV()
     {
-        var navData = await (new MutualFundService()).GetMutualFundNAV();
+        var navData = await _mutualFundService.GetMutualFundNAV();
         return navData;
     }
     public async Task<IActionResult> GetHistoricalPriceGivenStock()
@@ -152,7 +126,7 @@ public async Task<List<NAVData>> GetMutualFundNAV()
             var periodData = new Dictionary<YahooFinanceApi.Period, List<Candle>>();
             foreach (var period in periods)
             {
-                var candles = await (new YahooFinanceService()).GetHistoricalPriceGivenStock(
+                var candles = await _yahooFinanceService.GetHistoricalPriceGivenStock(
                     symbol,
                     new DateTime(2015, 1, 1),
                     new DateTime(2025, 7, 1),

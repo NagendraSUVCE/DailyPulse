@@ -8,9 +8,16 @@ public class MutualFundService
     private string _allFundsLatestNAV = string.Empty;
     public MutualFundService()
     {
-        if(_allFundsLatestNAV==string.Empty)
+        if (_allFundsLatestNAV == string.Empty)
         {
-            _allFundsLatestNAV = GetLatestNAVForAllFunds().Result;
+            try
+            {
+                // _allFundsLatestNAV = GetLatestNAVForAllFunds().Result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching latest NAV: {ex.Message}");
+            }
         }
     }
 
@@ -116,7 +123,7 @@ public class MutualFundService
     }
 
     private async Task<string> GetLatestNAVForAllFunds()
-    { 
+    {
         string url = "https://www.amfiindia.com/spages/NAVAll.txt";
         string contents = await GetWebsiteContents(url);
         return contents;

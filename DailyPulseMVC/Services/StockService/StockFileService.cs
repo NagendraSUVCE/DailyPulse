@@ -17,7 +17,7 @@ public class StockFileService
                 {
                     stockPurchase = new StockPurchase
                     {
-                        Symbol = "MSFT",
+                        StockSymbol = "MSFT",
                         StockName = "Microsoft",
                         Quantity = row["NetShares"] != DBNull.Value ? Convert.ToDecimal(row["NetShares"]) : 0,
                         PurchasePrice = row["FairMarketValue"] != DBNull.Value ? Convert.ToDecimal(row["FairMarketValue"]) : 0,
@@ -47,7 +47,7 @@ public class StockFileService
     }
     public async Task<List<StockPurchase>> GetStockPurchasesMutualFunds()
     {
-        DataSet dsMutualFunds = await GetMutualFundsSummary();
+        DataSet dsMutualFunds = await GetMutualFundsDetail();
         List<StockPurchase> stockPurchases = new List<StockPurchase>();
         StockPurchase stockPurchase = null;
         foreach (DataRow row in dsMutualFunds.Tables[0].Rows)
@@ -67,7 +67,9 @@ public class StockFileService
                 {
                     stockPurchase = new StockPurchase
                     {
-                        Symbol = row["PRODUCT_CODE"]?.ToString() ?? "",
+                        StockSymbol = row["PRODUCT_CODE"]?.ToString() ?? "",
+                        YahooStockId = GetYahooStockId(row["PRODUCT_CODE"]?.ToString() ?? ""),
+
                         StockName = row["SCHEME_NAME"]?.ToString() ?? "",
                         Quantity = row["UNITS"] != DBNull.Value ? Convert.ToDecimal(row["UNITS"]) : 0,
                         PurchasePrice = row["PRICE"] != DBNull.Value ? Convert.ToDecimal(row["PRICE"]) : 0,
@@ -89,6 +91,84 @@ public class StockFileService
             }
         }
         return stockPurchases;
+    }
+
+    private string GetYahooStockId(string stockSymbol)
+    {
+        var yahooStockId = stockSymbol;
+        if (stockSymbol == "HGFOFT")
+        {
+            yahooStockId = "0P0000XW7I.BO"; // Replace with actual Yahoo Finance ID for the mutual fund
+        } else if (stockSymbol == "HINNPT")
+        {
+            yahooStockId = "0P0000XW7T.BO";
+        }
+        else if (stockSymbol == "HLFGN")
+        {
+            yahooStockId = "0P00005V09.BO";
+        }
+        else if (stockSymbol == "HLFGTN")
+        {
+            yahooStockId = "0P0000XW89.BO";
+        }
+        else if (stockSymbol == "HMCOGT")
+        {
+            yahooStockId = "0P0000XW8F.BO";
+        }
+        else if (stockSymbol == "HPREG")
+        {
+            yahooStockId = "0P0001EI1B.BO";
+        }
+        else if (stockSymbol == "HPREGT")
+        {
+            yahooStockId = "0P0001EI18.BO";
+        }
+        else if (stockSymbol == "P1191")
+        {
+            yahooStockId = "0P0000GB48.BO";
+        }
+        else if (stockSymbol == "P1565")
+        {
+            yahooStockId = "0P0000ZKW6.BO";
+        }
+        else if (stockSymbol == "P8042")
+        {
+            yahooStockId = "0P0000XWAT.BO";
+        }
+        else if (stockSymbol == "P8176")
+        {
+            yahooStockId = "0P0000XWAB.BO";
+        }
+        else if (stockSymbol == "PDFG")
+        {
+            yahooStockId = "0P00005WZZ.BO";
+        }
+        else if (stockSymbol == "L103G")
+        {
+            yahooStockId = "0P00005WF0.BO";
+        }
+        else if (stockSymbol == "LD103G")
+        {
+            yahooStockId = "0P0000XVJQ.BO";
+        }
+        /*
+        HBFG	HDFCBALANCED.BO
+HGFOFT	0P0000XW7I.BO
+HINNPT	0P0000XW7T.BO
+HLFGN	0P00005V09.BO
+HLFGTN	0P0000XW89.BO
+HMCOGT	0P0000XW8F.BO
+HPREG	0P0001EI1B.BO
+HPREGT	0P0001EI18.BO
+P1191	0P0000GB48.BO
+P1565	0P0000ZKW6.BO
+P8042	0P0000XWAT.BO
+P8176	0P0000XWAB.BO
+PDFG	0P00005WZZ.BO
+L103G	0P00005WF0.BO
+LD103G	0P0000XVJQ.BO
+        */
+        return yahooStockId;
     }
 
     public async Task<DataSet> GetMSFTPurchasesFromPayslipSummarized()

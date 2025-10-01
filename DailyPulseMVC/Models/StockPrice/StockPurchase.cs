@@ -1,8 +1,9 @@
 
 public class StockPurchase
 {
-    public string Symbol { get; set; }
+    public string StockSymbol { get; set; }
     public string StockName { get; set; }
+    public string YahooStockId { get; set; }
     public decimal? Quantity { get; set; }
     public DateTime? PurchaseDate { get; set; }
     public decimal? PurchasePrice { get; set; }
