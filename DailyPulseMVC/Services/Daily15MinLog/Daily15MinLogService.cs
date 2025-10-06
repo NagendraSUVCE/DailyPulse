@@ -302,7 +302,15 @@ public class Daily15MinLogService
         // Add the past 30 days table to the DataSet
         dsNew.Tables.Add(past30DaysTable);
 
-        var dayRanges = new List<int> { 7, 30, 90, 365 };
+        // Add iteration tracking
+        var iterationStartDate = new DateTime(2025, 09, 22); // Start of the current iteration
+        var iterationLength = 14; // Length of iteration in days
+        var today = DateTime.Now.Date;
+
+        // Calculate the current iteration day
+        var daysSinceStart = (today - iterationStartDate).Days;
+        var currentIterationDay = (daysSinceStart % iterationLength) + 1;
+        var dayRanges = new List<int> { currentIterationDay, 7, 30, 90, 365 };
 
         DataTable summaryTableForDailyRanges = new LogSummaryService().GetCategorySummary(lstDailyLogSummaryForEachDay, dayRanges, targets);
 
