@@ -59,13 +59,6 @@ public class HomeController : Controller
         dataSet.Tables.Add(dataTable);
         return View("Common", dataSet);
     }
-
-    public async Task<IActionResult> ExpensesPending()
-    {
-        var lstDailyLog15MinExpensesPending = await (new ExpensesService()).GetAllExpensesLogPending();
-        return View("Index", lstDailyLog15MinExpensesPending);
-    }
-
     public async Task<IActionResult> FileDetails()
     {
         var filePath = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/allFilesOfNagendraKrishna25Jul2024_2_full_2.xlsx";

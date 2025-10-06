@@ -55,7 +55,7 @@ public class ExpensesService
     }
 
 
-    public async Task<List<DailyLog15Min>> GetAllExpensesLogPending()
+    public async Task<DataSet> GetAllExpensesLogPending()
     {
         List<DailyLog15Min> lstDailyLog15MinExpensesPending = new List<DailyLog15Min>();
         var lstDaily15MinLog = (new Daily15MinLogService()).GetDaily15MinLogAsync().Result;
@@ -120,7 +120,7 @@ public class ExpensesService
             expensesPendingObj.AccountingPending++; // bug fix - since these are not in expenses sheet either
             lstExpenses.Add(expensesObj);
         }
-
+        List<ExpensesPending> expensesPendings = new List<ExpensesPending> { expensesPendingObj };
         var folderPath = @"Nagendra/SelfCode/DatabaseInCSV";
 
         string filePathExpensesPending = "ExpensesPending.csv";
@@ -131,19 +131,26 @@ public class ExpensesService
         string expensesPendingSummaryCSVFilePath = "ExpensesPendingSummary.csv";
         string temp_expensesPendingSummaryCSVFilePath = "Temp_ExpensesPendingSummary.csv";
         await GraphFileUtility.CreateTemporaryFileInLocal(folderPath, expensesPendingSummaryCSVFilePath, temp_expensesPendingSummaryCSVFilePath);
-        AppendExpensesPendingDataToCsv(temp_expensesPendingSummaryCSVFilePath, new List<ExpensesPending> { expensesPendingObj });
+        AppendExpensesPendingDataToCsv(temp_expensesPendingSummaryCSVFilePath, expensesPendings);
         await GraphFileUtility.UploadFile(folderPath, expensesPendingSummaryCSVFilePath, temp_expensesPendingSummaryCSVFilePath);
 
-               if (File.Exists(temp_filePathExpensesPending))
-            {
-                File.Delete(temp_filePathExpensesPending);
-            }
+        if (File.Exists(temp_filePathExpensesPending))
+        {
+            File.Delete(temp_filePathExpensesPending);
+        }
 
-               if (File.Exists(temp_expensesPendingSummaryCSVFilePath))
-            {
-                File.Delete(temp_expensesPendingSummaryCSVFilePath);
-            }
-        return lstDailyLog15MinExpensesPending;
+        if (File.Exists(temp_expensesPendingSummaryCSVFilePath))
+        {
+            File.Delete(temp_expensesPendingSummaryCSVFilePath);
+        }
+         DataTable expensesPendingsDatatable = DataTableConverter.ToDataTable(expensesPendings);
+         DataSet ds = new DataSet();
+         ds.Tables.Add(expensesPendingsDatatable);
+         DataTable expensesDatatable = DataTableConverter.ToDataTable(lstExpenses);
+         ds.Tables.Add(expensesDatatable);
+         DataTable expensesPendingDatatable = DataTableConverter.ToDataTable(lstDailyLog15MinExpensesPending);
+         ds.Tables.Add(expensesPendingDatatable);
+        return ds;
     }
 
 

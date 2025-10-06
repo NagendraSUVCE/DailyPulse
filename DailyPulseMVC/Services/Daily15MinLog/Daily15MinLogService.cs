@@ -527,10 +527,10 @@ public class Daily15MinLogService
         {
             if (group.Count != 96)
             {
-            validations.Add(new Validations
-            {
-                ValidationMessage = $"Validation failed for date {group.Date:yyyy-MM-dd}: Expected 96 entries, but found {group.Count}."
-            });
+                validations.Add(new Validations
+                {
+                    ValidationMessage = $"Validation failed for date {group.Date:yyyy-MM-dd}: Expected 96 entries, but found {group.Count}."
+                });
             }
         }
 

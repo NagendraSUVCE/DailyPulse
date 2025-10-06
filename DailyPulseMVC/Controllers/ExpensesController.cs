@@ -33,6 +33,13 @@ public class ExpensesController : Controller
         return await Task.FromResult(View(dsNew));
     }
 
+    public async Task<IActionResult> ExpensesPending()
+    {
+        DataSet lstDailyLog15MinExpensesPending = await (new ExpensesService()).GetAllExpensesLogPending();
+        return View("Common", lstDailyLog15MinExpensesPending);
+    }
+
+
     public async Task<IActionResult> ExpensesPendingGraph()
     {
         var lstDailyLog15MinExpensesPending = await (new ExpensesService()).GetPayslipsSummarizedGraphWay();
