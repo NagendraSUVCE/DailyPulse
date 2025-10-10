@@ -10,10 +10,12 @@ public class ExpensesController : Controller
 {
     // dotnet publish -c Release -o ./bin/Publish
     private readonly ILogger<ExpensesController> _logger;
+    private BankStatementService _bankStatementService;
 
     public ExpensesController(ILogger<ExpensesController> logger)
     {
         _logger = logger;
+        _bankStatementService = new BankStatementService();
     }
 
     public async Task<IActionResult> Common()
@@ -46,10 +48,10 @@ public class ExpensesController : Controller
         return View("Common", lstDailyLog15MinExpensesPending);
     }
 
-    public IActionResult Reconciliation()
+    public async Task<IActionResult> Reconciliation()
     {
         DataSet dsNew = new DataSet();
-        DataTable dt = (new BankStatementService()).ReconcileBankStatementsWithExpenses().Result;
+        DataTable dt = await _bankStatementService.ReconcileBankStatementsWithExpenses();
         dsNew.Tables.Add(dt);
 
         return View("Common", dsNew);
@@ -58,10 +60,9 @@ public class ExpensesController : Controller
     public async Task<IActionResult> BankStatements()
     {
         DataSet dsNew = new DataSet();
-        List<BankStmt> lstBankStmts = await (new BankStatementService()).GetBankDetailsICICI();
+        List<BankStmt> lstBankStmts = await _bankStatementService.GetBankDetailsICICI();
+       
         lstBankStmts = lstBankStmts.Where(stmt => stmt.BankName == "CITI").ToList();
-
-
         lstBankStmts = lstBankStmts.Where(stmt => stmt.TxnType == "ToBeFilled").ToList();
         DataTable dataTablePurchases = DataTableConverter.ToDataTable(lstBankStmts);
         DataTable summaryTable = new DataTable();

@@ -4,6 +4,15 @@ using System.Threading.Tasks;
 
 public class StockFileService
 {
+    private DataSet payslipSummarizedDataSet = null;
+    public async Task<List<StockPurchase>> GetAllPurchases()
+    {
+        List<StockPurchase> stockPurchases = new List<StockPurchase>();
+        stockPurchases.AddRange(await GetStockPurchasesMSFT());
+        stockPurchases.AddRange(await GetStockPurchasesMutualFunds());
+        return stockPurchases;
+    }
+    // Removed redundant method to avoid ambiguity
     public async Task<List<StockPurchase>> GetStockPurchasesMSFT()
     {
         DataSet dsMSFTShares = await GetMSFTPurchasesFromPayslipSummarized();
@@ -99,7 +108,8 @@ public class StockFileService
         if (stockSymbol == "HGFOFT")
         {
             yahooStockId = "0P0000XW7I.BO"; // Replace with actual Yahoo Finance ID for the mutual fund
-        } else if (stockSymbol == "HINNPT")
+        }
+        else if (stockSymbol == "HINNPT")
         {
             yahooStockId = "0P0000XW7T.BO";
         }
@@ -173,9 +183,12 @@ LD103G	0P0000XVJQ.BO
 
     public async Task<DataSet> GetMSFTPurchasesFromPayslipSummarized()
     {
-        DataSet dataSet = await (new ExpensesService()).GetPayslipsSummarizedGraphWay();
-        DataTable dataTable1 = dataSet.Tables[0];
-        foreach (DataTable table in dataSet.Tables)
+        if (payslipSummarizedDataSet == null)
+        {
+            payslipSummarizedDataSet = await (new ExpensesService()).GetPayslipsSummarizedGraphWay();
+        }
+        DataTable dataTable1 = payslipSummarizedDataSet.Tables[0];
+        foreach (DataTable table in payslipSummarizedDataSet.Tables)
         {
             if (table.TableName == "MSFTSharesSummary")
             {

@@ -11,10 +11,15 @@ public class HomeController : Controller
     // dotnet publish -c Release -o ./bin/Publish
     // dotnet build /nologo /verbosity:q /property:WarningLevel=0 /clp:ErrorsOnly
     private readonly ILogger<HomeController> _logger;
+    private Daily15MinLogService _daily15MinLogService = null;
 
     public HomeController(ILogger<HomeController> logger)
     {
         _logger = logger;
+        if(_daily15MinLogService == null)
+        {
+            _daily15MinLogService = new Daily15MinLogService();
+        }
     }
 
 
@@ -26,14 +31,14 @@ public class HomeController : Controller
         //*/
          // Fetch Fitbit data
         
-        var lstDailyLog15Min = await (new Daily15MinLogService()).GetDaily15MinLogAsyncForYear2025();
+        var lstDailyLog15Min = await _daily15MinLogService.GetDaily15MinLogAsyncForYear2025();
         return View(lstDailyLog15Min);
     }
 
     public async Task<IActionResult> Daily15MinLogGroupBy()
     {
         
-        var lstDailyLog15Min = await (new Daily15MinLogService()).GetDaily15MinLogAsyncForYear2025();
+        var lstDailyLog15Min = await _daily15MinLogService.GetDaily15MinLogAsyncForYear2025();
         DataTable dataTable = new DataTable();
         dataTable.Columns.Add("StartDate", typeof(DateTime));
         dataTable.Columns.Add("EndDate", typeof(DateTime));

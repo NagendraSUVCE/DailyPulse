@@ -50,12 +50,14 @@ public class StockPriceController : Controller
         dsNew = await _stockFileService.GetMSFTPurchasesFromPayslipSummarized();
         return View("Common", dsNew);
     }
-    //http://localhost:5278/stockprice/ListOfStockPurchases
+    //http://localhost:5278/stockprice/ListOfPurchases
     
-    public async Task<IActionResult> ListOfStockPurchasesMutualFunds()
+    public async Task<IActionResult> ListOfPurchases()
     {
         DataSet dsNew = new DataSet();
-        dsNew = await _stockFileService.GetMutualFundsSummary();
+        var lstPurchases = await _stockFileService.GetAllPurchases();
+        DataTable dataTableLatestCandle = DataTableConverter.ToDataTable(lstPurchases);
+        dsNew.Tables.Add(dataTableLatestCandle);
         return View("Common", dsNew);
     }
     public async Task<IActionResult> ListOfStockPurchasesMutualFundsDetail()

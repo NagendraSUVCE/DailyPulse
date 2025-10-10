@@ -5,3 +5,7 @@ https://www.espncricinfo.com/records/trophy/team-series-results/indian-premier-l
 
 
 */
+
+public class CricketProcessor
+{
+}
