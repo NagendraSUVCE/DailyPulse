@@ -121,7 +121,7 @@ public class BankStatementService
         }
         return lstBankStmt;
     }
-    public async Task<List<BankStmt>> GetBankDetailsICICI()
+    public async Task<List<BankStmt>> GetBankStatementsForAllBanks()
     {
         return await Task.Run(() =>
         {
@@ -179,6 +179,14 @@ public class BankStatementService
                 foreach (var strlink in strLinks)
                 {
                     lstBankStatements.AddRange(GetBankDetailsCitiBankGivenFileName(strlink).Result);
+                }
+
+                  strLinks.Clear();
+                strLinks.Add(baseFolder + @"HDFC/Acct_Statement_XXXXXXXX4998_11thOct2025_2024_2025.xls");
+                foreach (var strlink in strLinks)
+                {
+                    lstBankStatements.AddRange(GetBankStatementsGivenFilename(strlink
+                    , new BankConfig("HDFC", "", "Date", 0, "dd/MM/yy", 0, 1, 4, 5, 6)));
                 }
                 
             }
@@ -450,7 +458,7 @@ public class BankStatementService
     {
         var expenseService = new ExpensesService();
         var lstExpenses = await expenseService.GetAllExpenses();
-        var lstBankStatement = await GetBankDetailsICICI();
+        var lstBankStatement = await GetBankStatementsForAllBanks();
 
         // Add logic to reconcile bank statements with expenses and return a DataTable
         DataTable reconciliationResult = new DataTable();

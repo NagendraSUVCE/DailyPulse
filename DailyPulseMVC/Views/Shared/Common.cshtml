@@ -4,6 +4,30 @@
     ViewData["Title"] = "DataSet Viewer";
 }
 
+<div class="table-responsive">
+    <table class="table table-bordered table-hover">
+        <thead>
+            <tr>
+                <th>Action 1</th>
+                <th>Action 2</th>
+                <th>Action 3</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <a href="/Expenses/GetBankStatementsForAllBanks" class="btn btn-primary btn-block">Bank Get All Bank Statements</a>
+                </td>
+                <td>
+                    <a href="/Home/Daily15MinLogGroupBy" class="btn btn-primary btn-block">Daily15MinLog GroupBy</a>
+                </td>
+                <td>
+                    <a href="/Expenses/Reconciliation" class="btn btn-primary btn-block">Expenses Reconciliation</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 <h2>DataSet Viewer</h2>
 
 @foreach (System.Data.DataTable table in Model.Tables)

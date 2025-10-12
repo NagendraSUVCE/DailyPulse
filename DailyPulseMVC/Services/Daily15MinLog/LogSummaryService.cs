@@ -9,6 +9,7 @@ public class LogSummaryService
 {
     public DataTable GetCategorySummary(List<DailyLogSummaryForEachDay> logs, List<int> dayRanges , Dictionary<string, decimal> targets)
     {
+        dayRanges = dayRanges.Distinct().ToList();
         DataTable table = new DataTable();
         table.Columns.Add("CategoryName", typeof(string));
 

@@ -25,8 +25,8 @@ public class CricketFileController : Controller
     }
     public async Task<List<TeamSeriesResults>> TeamSeriesResults(string url)
     {
-        string iplSeries = "https://www.espncricinfo.com/records/trophy/team-series-results/indian-premier-league-117";
-        iplSeries = @"https://www.espncricinfo.com/ci/engine/series/60260.html";
+        // string iplSeries = "https://www.espncricinfo.com/records/trophy/team-series-results/indian-premier-league-117";
+        // iplSeries = @"https://www.espncricinfo.com/ci/engine/series/60260.html";
         return await _teamSeriesResultsService.GetTeamSeriesResults(url);
     }
 }

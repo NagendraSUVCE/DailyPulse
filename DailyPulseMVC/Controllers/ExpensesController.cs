@@ -57,13 +57,14 @@ public class ExpensesController : Controller
         return View("Common", dsNew);
     }
 
-    public async Task<IActionResult> BankStatements()
+    public async Task<IActionResult> GetBankStatementsForAllBanks()
     {
         DataSet dsNew = new DataSet();
-        List<BankStmt> lstBankStmts = await _bankStatementService.GetBankDetailsICICI();
-       
-        lstBankStmts = lstBankStmts.Where(stmt => stmt.BankName == "CITI").ToList();
-        lstBankStmts = lstBankStmts.Where(stmt => stmt.TxnType == "ToBeFilled").ToList();
+        List<BankStmt> lstBankStmts = await _bankStatementService.GetBankStatementsForAllBanks();
+        lstBankStmts = lstBankStmts.Where(b =>b.TxnDate>=new DateTime(2024,04,01)).ToList();
+        // lstBankStmts = lstBankStmts.Where(stmt => stmt.BankName == "CITI").ToList();
+        // lstBankStmts = lstBankStmts.Where(stmt => stmt.TxnType == "ToBeFilled").ToList();
+
         DataTable dataTablePurchases = DataTableConverter.ToDataTable(lstBankStmts);
         DataTable summaryTable = new DataTable();
         summaryTable.Columns.Add("NameOfTable", typeof(string));
