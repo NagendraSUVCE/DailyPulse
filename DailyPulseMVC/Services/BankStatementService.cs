@@ -108,22 +108,51 @@ public class BankStatementService
         }
         return lstBankStmt;
     }
-    private List<BankStmt> GetBankStatementsGivenFilename(string fileName, BankConfig bankConfig)
+    private async Task<List<BankStmt>> GetBankStatementsGivenFilename(string fileName, BankConfig bankConfig)
     {
+        var parts = fileName.Split('/');
+        var fileNameOnly = parts[^1];
+        var oneLevelUpFolder = parts[^2];
+        var folderPath = "Nagendra/all Salary/Bank statements/";
+        DataSet dsTemp = await GetBankStatementUsingGraph(folderPath, oneLevelUpFolder, fileNameOnly);
         List<BankStmt> lstBankStmt = new List<BankStmt>();
-        DataSet ds = Utility.Excel.ExcelUtilities.GetDataFromExcelNewWay(fileName);
-        if (ds != null && ds.Tables.Count > 0)
+        // DataSet ds = Utility.Excel.ExcelUtilities.GetDataFromExcelNewWay(fileName);
+        if (dsTemp != null && dsTemp.Tables.Count > 0)
         {
-            DataTable dt = ds.Tables[0];
+            DataTable dt = dsTemp.Tables[0];
             lstBankStmt = GetBankStatementsGivenDataTable(dt,
             bankConfig
             );
         }
         return lstBankStmt;
     }
+    
+
+    private async Task<System.Data.DataSet> GetBankStatementUsingGraph(string baseFolder, string oneLevelUpFolder, string fileNameOnly)
+    {
+        var tempFilePath = $"temp_{fileNameOnly}";
+        string folderPath = baseFolder + oneLevelUpFolder;
+        System.Data.DataSet ds = null;
+        List<DailyLog15Min> lstDailyLog15Min = new List<DailyLog15Min>();
+        try
+        {
+            await GraphFileUtility.CreateTemporaryFileInLocal(folderPath, fileNameOnly, tempFilePath);
+            ds = GraphFileUtility.GetDataFromExcelNewWay(tempFilePath);
+        }
+        catch (Exception ex)
+        {
+            // https://learn.microsoft.com/en-us/answers/questions/1191723/problem-extract-data-using-microsoft-graph-c-net
+            throw;
+        }
+        if (File.Exists(tempFilePath))
+        {
+            File.Delete(tempFilePath);
+        }
+        return ds;
+    }
     public async Task<List<BankStmt>> GetBankStatementsForAllBanks()
     {
-        return await Task.Run(() =>
+        return await Task.Run(async () =>
         {
             List<BankStmt> lstBankStatements = new List<BankStmt>();
             try
@@ -147,7 +176,7 @@ public class BankStatementService
                 strLinks.Add(baseFolder + @"ICICI/ICICI 2023 2024 OpTransactionHistoryTpr04-01-2025 Full year.xls");
                 foreach (var strlink in strLinks)
                 {
-                    lstBankStatements.AddRange(GetBankStatementsGivenFilename(strlink
+                    lstBankStatements.AddRange(await GetBankStatementsGivenFilename(strlink
                     , new BankConfig("ICICI", "", "S No.", 1, "dd/MM/yyyy", TxnDateIndex, TxnRemarksIndex, WithdrawalIndex,
                      DepositIndex, BalanceIndex)));
                 }
@@ -159,7 +188,7 @@ public class BankStatementService
                 strLinks.Add(baseFolder + @"CITI AXIS/2024 2025 2024 Apr 2025 Mar CITI AXIS.xlsx");
                 foreach (var strlink in strLinks)
                 {
-                    lstBankStatements.AddRange(GetBankStatementsGivenFilename(strlink
+                    lstBankStatements.AddRange(await GetBankStatementsGivenFilename(strlink
                     , new BankConfig("AXIS", "", "Tran Date", 0, "dd/MM/yyyy hh:mm:ss tt", 0, 2, 3, 4, 5)));
                 }
 
@@ -181,14 +210,14 @@ public class BankStatementService
                     lstBankStatements.AddRange(GetBankDetailsCitiBankGivenFileName(strlink).Result);
                 }
 
-                  strLinks.Clear();
+                strLinks.Clear();
                 strLinks.Add(baseFolder + @"HDFC/Acct_Statement_XXXXXXXX4998_11thOct2025_2024_2025.xls");
                 foreach (var strlink in strLinks)
                 {
-                    lstBankStatements.AddRange(GetBankStatementsGivenFilename(strlink
+                    lstBankStatements.AddRange(await GetBankStatementsGivenFilename(strlink
                     , new BankConfig("HDFC", "", "Date", 0, "dd/MM/yy", 0, 1, 4, 5, 6)));
                 }
-                
+
             }
             catch (Exception ex)
             {
