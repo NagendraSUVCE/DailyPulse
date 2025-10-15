@@ -29,4 +29,14 @@ namespace Models.Finance
         public int ExpenseLoggingAutomatic { get; set; }
         public string? ExpenseMisc { get; set; }
     }
+
+    public class Reconciliation
+    {
+        public DateTime? TxnDate { get; set; }
+        public string TransactionRemarks { get; set; }
+        public decimal BankWithdrawal { get; set; }
+        public string Daily15MinLogId { get; set; }
+        public decimal ExpenseAmount { get; set; }
+        public string Remarks { get; set; }
+    }
 }

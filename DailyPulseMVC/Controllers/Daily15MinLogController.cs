@@ -3,6 +3,8 @@ using System.Data;
 using System.Diagnostics;
 using DailyPulseMVC.Models;
 using Models.DailyLog;
+using Models.Finance;
+using System.Threading.Tasks;
 
 namespace DailyPulseMVC.Controllers;
 
@@ -44,15 +46,6 @@ public class Daily15MinLogController : Controller
     {
         DataSet dsNew = new DataSet();
         dsNew = (new Daily15MinLogService()).AvgStreak().Result;
-
-        return View("Common", dsNew);
-    }
-
-    public IActionResult Reconciliation()
-    {
-        DataSet dsNew = new DataSet();
-        DataTable dt = (new BankStatementService()).ReconcileBankStatementsWithExpenses().Result;
-        dsNew.Tables.Add(dt);
 
         return View("Common", dsNew);
     }

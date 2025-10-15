@@ -4,8 +4,10 @@ using Microsoft.Extensions.Configuration;
 using DailyPulseMVC.Services;
 public class Daily15MinLogService
 {
+    private DataSet dataSet = null;
     public Daily15MinLogService()
     {
+
     }
 
     public async Task<System.Data.DataSet> GetDaily15MinLogFromGraphExcel()
@@ -34,17 +36,20 @@ public class Daily15MinLogService
     public async Task<List<DailyLog15Min>> GetDaily15MinLogAsyncForYear2025()
     {
         List<DailyLog15Min> lstDailyLog15Min = new List<DailyLog15Min>();
-        var temp = await (new Daily15MinLogService()).GetDaily15MinLogAsync();
+        var temp = await GetDaily15MinLogAsync();
 
         lstDailyLog15Min = temp.Where(log => log.dtActivity.Year == 2025).ToList();
         return lstDailyLog15Min;
     }
     public async Task<List<DailyLog15Min>> GetDaily15MinLogAsync()
     {
-        DataSet dataSet = null;
+
         try
         {
-            dataSet = await GetDaily15MinLogFromGraphExcel();
+            if (dataSet == null)
+            {
+                dataSet = await GetDaily15MinLogFromGraphExcel();
+            }
             if (dataSet == null || dataSet.Tables.Count < 7)
             {
                 throw new Exception("DataSet is null or does not contain enough tables.");
@@ -200,7 +205,7 @@ public class Daily15MinLogService
     {
         var categories = new[] { "SelfHelp", "SelfCode", "SelfTech", "SelfSong", "FitbitDailySteps" };
         List<DailyLogSummaryForEachDay> lstDailyLogSummaryForEachDay = await GetDailyLogSummaryForEachDaysAsync();
-
+        SaveDailyLogSummaryForEachDayToCSV(lstDailyLogSummaryForEachDay);
         // Group data by year and category
         var groupedData = lstDailyLogSummaryForEachDay
             .Where(log => categories.Contains(log.Category))
@@ -315,12 +320,13 @@ public class Daily15MinLogService
         DataTable summaryTableForDailyRanges = new LogSummaryService().GetCategorySummary(lstDailyLogSummaryForEachDay, dayRanges, targets);
 
         dsNew.Tables.Add(summaryTableForDailyRanges);
-        // dsNew.Tables.Add(streakResultsDatatable);
         dsNew.Tables.Add(await ValidationsDataTable());
         dsNew.Tables.Add((new LogSummaryService().GetCategoryWeeklySummary(lstDailyLogSummaryForEachDay)));
         dsNew.Tables.Add(averageHoursTable);
         dsNew.Tables.Add(totalHoursTable);
         dsNew.Tables.Add(weeklyData);
+        dsNew.Tables.Add(DataTableConverter.ToDataTable(streakResults));
+        dsNew.Tables.Add(GetMonthWiseAverageForEachCategory(lstDailyLogSummaryForEachDay));
 
         // dsNew.Tables.Add(categoriesTotalHrsEachDay); // This renders too much data page becomes slow. Do not uncomment
         return dsNew;
@@ -535,5 +541,56 @@ public class Daily15MinLogService
         }
 
         return validations;
+    }
+
+    private static void SaveDailyLogSummaryForEachDayToCSV(List<DailyLogSummaryForEachDay> lstDailyLogSummaryForEachDay)
+    {
+        /* DataTable dataTable = DataTableConverter.ToDataTable(lstDailyLogSummaryForEachDay);
+         string baseFolder = "wwwroot\\files\\Daily15MinLog";
+         string fileName = "DailyLogSummaryForEachDay.csv";
+         bool overwriteAllContents = true;
+         DataTableConverter.DataTableToCsv(dataTable, baseFolder, fileName, overwriteAllContents);
+         */
+    }
+
+    private DataTable GetMonthWiseAverageForEachCategory(List<DailyLogSummaryForEachDay> lstDailyLogSummaryForEachDay)
+    {
+        DataTable dataTable = new DataTable();
+        dataTable.Columns.Add("Year", typeof(string));
+        dataTable.Columns.Add("Category", typeof(string));
+        for (int month = 1; month <= 12; month++)
+        {
+            dataTable.Columns.Add(new DateTime(1, month, 1).ToString("MMM"), typeof(decimal));
+        }
+
+        var groupedByYearAndCategory = lstDailyLogSummaryForEachDay
+            .GroupBy(log => new { Year = log.ActivityDate?.Year, log.Category })
+            .OrderByDescending(g => g.Key.Year)
+            .ThenBy(g => g.Key.Category);
+
+        foreach (var group in groupedByYearAndCategory)
+        {
+            var row = dataTable.NewRow();
+            row["Year"] = "Year-"+group.Key.Year;
+            row["Category"] = group.Key.Category;
+
+            for (int month = 1; month <= 12; month++)
+            {
+            var monthlyLogs = group
+                .Where(log => log.ActivityDate?.Month == month)
+                .ToList();
+
+            var totalHrs = monthlyLogs.Sum(log => log.TotalValue);
+            var daysCount = monthlyLogs.Select(log => log.ActivityDate?.Date).Distinct().Count();
+
+            // Average based on the number of entries in that particular month
+            var averageHrs = daysCount > 0 ? totalHrs / daysCount : 0;
+            row[new DateTime(1, month, 1).ToString("MMM")] = averageHrs > 0 ? averageHrs : DBNull.Value;
+            }
+
+            dataTable.Rows.Add(row);
+        }
+
+        return dataTable;
     }
 }

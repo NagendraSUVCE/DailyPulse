@@ -64,6 +64,42 @@ public class HomeController : Controller
         dataSet.Tables.Add(dataTable);
         return View("Common", dataSet);
     }
+    
+
+    public async Task<IActionResult> Daily15MinLogThisDatePreviousYear()
+    {
+        
+        var lstDailyLog15Min = await _daily15MinLogService.GetDaily15MinLogAsync();
+
+        var today = DateTime.Now;
+        lstDailyLog15Min = lstDailyLog15Min
+            .Where(log => log.dtActivity.Month == today.Month && log.dtActivity.Day == today.Day)
+            .ToList();
+        DataTable dataTable = new DataTable();
+        dataTable.Columns.Add("StartDate", typeof(DateTime));
+        dataTable.Columns.Add("EndDate", typeof(DateTime));
+        dataTable.Columns.Add("ActivityDesc", typeof(string));
+        dataTable.Columns.Add("TotalHours", typeof(double));
+
+        var groupedData = lstDailyLog15Min
+            .GroupBy(log => log.activityDesc)
+            .Select(group => new
+            {
+            ActivityDesc = group.Key,
+            StartDate = group.Min(log => log.dtActivity),
+            EndDate = group.Max(log => log.dtActivity),
+            TotalHours = group.Sum(log => log.Hrs)
+            })
+            .OrderByDescending(item => item.EndDate);
+
+        foreach (var item in groupedData)
+        {
+            dataTable.Rows.Add(item.StartDate, item.EndDate, item.ActivityDesc, item.TotalHours);
+        }
+        DataSet dataSet = new DataSet();
+        dataSet.Tables.Add(dataTable);
+        return View("Common", dataSet);
+    }
     public async Task<IActionResult> FileDetails()
     {
         var filePath = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/allFilesOfNagendraKrishna25Jul2024_2_full_2.xlsx";

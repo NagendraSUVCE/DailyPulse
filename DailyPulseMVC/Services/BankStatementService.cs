@@ -454,20 +454,15 @@ public class BankStatementService
         }
     }
 
-    public async Task<DataTable> ReconcileBankStatementsWithExpenses()
+    public async Task<List<Reconciliation>> ReconcileBankStatementsWithExpenses()
     {
         var expenseService = new ExpensesService();
-        var lstExpenses = await expenseService.GetAllExpenses();
+        List<ExpensesCustom> lstExpenses = await expenseService.GetAllExpenses();
         var lstBankStatement = await GetBankStatementsForAllBanks();
 
         // Add logic to reconcile bank statements with expenses and return a DataTable
-        DataTable reconciliationResult = new DataTable();
-        // Populate reconciliationResult with appropriate data
-        reconciliationResult.Columns.Add("TxnDate", typeof(DateTime));
-        reconciliationResult.Columns.Add("TransactionRemarks", typeof(string));
-        reconciliationResult.Columns.Add("BankWithdrawal", typeof(decimal));
-        reconciliationResult.Columns.Add("ExpenseAmount", typeof(decimal));
-        reconciliationResult.Columns.Add("Remarks", typeof(string));
+        List<Reconciliation> lstReconciliation = new List<Reconciliation>();
+        Reconciliation reconciliationObj = new Reconciliation();
 
         foreach (var bankStmt in lstBankStatement)
         {
@@ -484,13 +479,14 @@ public class BankStatementService
             {
                 foreach (var expense in matchingExpenses)
                 {
-                    var row = reconciliationResult.NewRow();
-                    row["TxnDate"] = bankStmt.TxnDate;
-                    row["TransactionRemarks"] = bankStmt.Misc;
-                    row["BankWithdrawal"] = bankStmt.Withdrawals;
-                    row["ExpenseAmount"] = expense.ExpenseAmt;
-                    row["Remarks"] = "Matched";
-                    reconciliationResult.Rows.Add(row);
+                    reconciliationObj  = new Reconciliation();
+                    reconciliationObj.TxnDate = bankStmt.TxnDate;
+                    reconciliationObj.TransactionRemarks = bankStmt.TxnDetails;
+                    reconciliationObj.BankWithdrawal = bankStmt.Withdrawals;
+                    reconciliationObj.Daily15MinLogId = expense.Daily15MinLogId;
+                    reconciliationObj.ExpenseAmount = expense.ExpenseAmt;
+                    reconciliationObj.Remarks = "Matched";
+                    lstReconciliation.Add(reconciliationObj);
                 }
             }
             else
@@ -504,27 +500,28 @@ public class BankStatementService
                 {
                     foreach (var expense in upperCeilingMatch)
                     {
-                        var row = reconciliationResult.NewRow();
-                        row["TxnDate"] = bankStmt.TxnDate;
-                        row["TransactionRemarks"] = bankStmt.Misc;
-                        row["BankWithdrawal"] = bankStmt.Withdrawals;
-                        row["ExpenseAmount"] = expense.ExpenseAmt;
-                        row["Remarks"] = "Matched with upper ceiling";
-                        reconciliationResult.Rows.Add(row);
+                    reconciliationObj  = new Reconciliation();
+                        reconciliationObj.TxnDate = bankStmt.TxnDate;
+                        reconciliationObj.TransactionRemarks = bankStmt.TxnDetails;
+                        reconciliationObj.BankWithdrawal = bankStmt.Withdrawals;
+                        reconciliationObj.Daily15MinLogId = expense.Daily15MinLogId;
+                        reconciliationObj.ExpenseAmount = expense.ExpenseAmt;
+                        reconciliationObj.Remarks = "Matched with upper ceiling";
+                        lstReconciliation.Add(reconciliationObj);
                     }
                 }
                 else
                 {
-                    var row = reconciliationResult.NewRow();
-                    row["TxnDate"] = bankStmt.TxnDate;
-                    row["TransactionRemarks"] = bankStmt.Misc;
-                    row["BankWithdrawal"] = bankStmt.Withdrawals;
-                    row["ExpenseAmount"] = DBNull.Value;
-                    row["Remarks"] = "No matching expense found";
-                    reconciliationResult.Rows.Add(row);
+                    reconciliationObj  = new Reconciliation();
+                    reconciliationObj.TxnDate = bankStmt.TxnDate;
+                    reconciliationObj.TransactionRemarks = bankStmt.TxnDetails;
+                    reconciliationObj.BankWithdrawal = bankStmt.Withdrawals;
+                    reconciliationObj.Daily15MinLogId = string.Empty;
+                    reconciliationObj.Remarks = "No matching expense found";
+                        lstReconciliation.Add(reconciliationObj);
                 }
             }
         }
-        return reconciliationResult;
+        return lstReconciliation;
     }
 }

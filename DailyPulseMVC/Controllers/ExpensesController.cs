@@ -51,12 +51,36 @@ public class ExpensesController : Controller
     public async Task<IActionResult> Reconciliation()
     {
         DataSet dsNew = new DataSet();
-        DataTable dt = await _bankStatementService.ReconcileBankStatementsWithExpenses();
-        dsNew.Tables.Add(dt);
+        List<Reconciliation> lstReconciliations = await (new BankStatementService()).ReconcileBankStatementsWithExpenses();
+        
+        var groupedReconciliations = lstReconciliations
+            .GroupBy(r => r.Remarks)
+            .Select(g => new
+            {
+            Remarks = g.Key,
+            Count = g.Count()
+            })
+            .ToList();
+
+        DataTable groupedTable = new DataTable("GroupedReconciliations");
+        groupedTable.Columns.Add("Remarks", typeof(string));
+        groupedTable.Columns.Add("Count", typeof(int));
+
+        foreach (var item in groupedReconciliations)
+        {
+            DataRow row = groupedTable.NewRow();
+            row["Remarks"] = item.Remarks;
+            row["Count"] = item.Count;
+            groupedTable.Rows.Add(row);
+        }
+
+        dsNew.Tables.Add(groupedTable);
+
+        DataTable dtReconciliations = DataTableConverter.ToDataTable(lstReconciliations);
+        dsNew.Tables.Add(dtReconciliations);
 
         return View("Common", dsNew);
     }
-
     public async Task<IActionResult> GetBankStatementsForAllBanks()
     {
         DataSet dsNew = new DataSet();
