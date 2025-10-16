@@ -60,7 +60,7 @@ public class StockPriceController : Controller
         dsNew.Tables.Add(dataTableLatestCandle);
         return View("Common", dsNew);
     }
-    // http://localhost:5278/stockprice/ListOfPurchasesMonthlySummary
+    //http://localhost:5278/stockprice/ListOfPurchasesMonthlySummary
         public async Task<IActionResult> ListOfPurchasesMonthlySummary()
     {
         DataSet dsNew = new DataSet();
@@ -85,15 +85,20 @@ public class StockPriceController : Controller
         {
             yearlySummaryTable.Columns.Add(year.ToString(), typeof(decimal));
         }
-        yearlySummaryTable.Columns.Add("Total", typeof(decimal));
+        yearlySummaryTable.Columns.Add("TotalInvestment", typeof(decimal)); // Add TotalInvestment column
+
         DataRow yearlyRow = yearlySummaryTable.NewRow();
         yearlyRow["Description"] = "Total Purchase Value";
+        decimal totalInvestment = 0; // Variable to calculate total investment
         foreach (var year in distinctYears)
         {
-            yearlyRow[year.ToString()] = groupedByYearMonth
+            var yearlyTotal = groupedByYearMonth
             .Where(g => g.Year == year && g.TotalPurchaseValue > 0)
             .Sum(g => g.TotalPurchaseValue);
+            yearlyRow[year.ToString()] = yearlyTotal;
+            totalInvestment += yearlyTotal.GetValueOrDefault(); // Accumulate total investment
         }
+        yearlyRow["TotalInvestment"] = totalInvestment; // Set total investment value
         yearlySummaryTable.Rows.Add(yearlyRow);
 
         // Create the second DataTable (months as columns, years as rows)
