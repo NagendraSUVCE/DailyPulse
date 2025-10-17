@@ -5,11 +5,14 @@ using System.Threading.Tasks;
 public class StockFileService
 {
     private DataSet payslipSummarizedDataSet = null;
+    private DataTable _ppfDataTable = null;
+    private DataTable _epfDataTable = null;
     public async Task<List<StockPurchase>> GetAllPurchases()
     {
         List<StockPurchase> stockPurchases = new List<StockPurchase>();
-        stockPurchases.AddRange(await GetStockPurchasesMSFT());
-        stockPurchases.AddRange(await GetStockPurchasesMutualFunds());
+        // stockPurchases.AddRange(await GetStockPurchasesMSFT());
+        // stockPurchases.AddRange(await GetStockPurchasesMutualFunds());
+        stockPurchases.AddRange(await GetPPF());
         return stockPurchases;
     }
     // Removed redundant method to avoid ambiguity
@@ -102,6 +105,53 @@ public class StockFileService
         return stockPurchases;
     }
 
+    public async Task<List<StockPurchase>> GetPPF()
+    {
+        DataSet dsMSFTShares = await GetMSFTPurchasesFromPayslipSummarized();
+        List<StockPurchase> stockPurchases = new List<StockPurchase>();
+        StockPurchase stockPurchase = null;
+        foreach (DataRow row in _ppfDataTable.Rows)
+            try
+            {
+                  DateTime purchaseDate;
+                if (DateTime.TryParse(row["TxnDate"].ToString(), out purchaseDate))
+                {
+                    purchaseDate = purchaseDate.Date; // Extract only the date part, discarding the time
+                }
+                else
+                {
+                    purchaseDate = DateTime.MinValue;
+                } 
+                if (purchaseDate != DateTime.MinValue)
+                {
+                    stockPurchase = new StockPurchase
+                    {
+                        StockSymbol = "PPF",
+                        StockName = "PPF",
+                        Quantity = row["Investment"] != DBNull.Value ? Convert.ToDecimal(row["Investment"]) : 0,
+                        PurchasePrice = 1,
+                        PurchaseDate = purchaseDate
+                    };
+
+                    if (stockPurchase.Quantity > 0)
+                    {
+                        stockPurchase.TotalPurchaseValue = stockPurchase.Quantity;
+                        stockPurchases.Add(stockPurchase);
+                    }
+                }
+            }
+            catch (InvalidCastException ex)
+            {
+                // Log the error and continue processing other rows
+                Console.WriteLine($"Invalid data format in row: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                // Log unexpected errors
+                Console.WriteLine($"An error occurred while processing row: {ex.Message}");
+            }
+        return stockPurchases;
+    }
     private string GetYahooStockId(string stockSymbol)
     {
         var yahooStockId = stockSymbol;
@@ -193,7 +243,14 @@ LD103G	0P0000XVJQ.BO
             if (table.TableName == "MSFTSharesSummary")
             {
                 dataTable1 = table;
-                break;
+            }
+            if (table.TableName == "EPF")
+            {
+                _epfDataTable = table;
+            }
+            if (table.TableName == "PPF")
+            {
+                _ppfDataTable = table;
             }
         }
         DataSet dsNew = new DataSet();

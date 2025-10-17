@@ -23,6 +23,12 @@ public class HomeController : Controller
     }
 
 
+
+
+    public async Task<String> Ping()
+    {
+        return "Connected";
+    }
     public async Task<IActionResult> Index()
     {
         /*

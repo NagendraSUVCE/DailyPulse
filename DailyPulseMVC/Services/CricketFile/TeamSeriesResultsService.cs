@@ -14,7 +14,7 @@ public class TeamSeriesResultsService
         List<TeamSeriesResults> teamSeriesResults = new List<TeamSeriesResults>();
         try
         {
-            teamSeriesMasterHtml = await GetWebsiteContentsAsync(TeamSeriesMasterLink);
+            teamSeriesMasterHtml = await GetWebsiteContents(TeamSeriesMasterLink);
         }
         catch (Exception ex)
         {
@@ -51,13 +51,5 @@ public class TeamSeriesResultsService
                 return response.Content.ReadAsStringAsync().Result;
             }
         });
-    }
-
-    private async Task<String> GetWebsiteContentsAsync(string url)
-    {
-        var scraper = new WebScraper();
-        string htmlContent =  await scraper.GetPageContentWithHeadersAsync(url);
-        Console.WriteLine(htmlContent);
-        return htmlContent;
     }
 }
