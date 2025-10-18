@@ -12,7 +12,8 @@ public class StockFileService
         List<StockPurchase> stockPurchases = new List<StockPurchase>();
         // stockPurchases.AddRange(await GetStockPurchasesMSFT());
         // stockPurchases.AddRange(await GetStockPurchasesMutualFunds());
-        stockPurchases.AddRange(await GetPPF());
+        // stockPurchases.AddRange(await GetPPF());
+        stockPurchases.AddRange(await GetEPFO());
         return stockPurchases;
     }
     // Removed redundant method to avoid ambiguity
@@ -134,6 +135,58 @@ public class StockFileService
                     };
 
                     if (stockPurchase.Quantity > 0)
+                    {
+                        stockPurchase.TotalPurchaseValue = stockPurchase.Quantity;
+                        stockPurchases.Add(stockPurchase);
+                    }
+                }
+            }
+            catch (InvalidCastException ex)
+            {
+                // Log the error and continue processing other rows
+                Console.WriteLine($"Invalid data format in row: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                // Log unexpected errors
+                Console.WriteLine($"An error occurred while processing row: {ex.Message}");
+            }
+        return stockPurchases;
+    }
+    public async Task<List<StockPurchase>> GetEPFO()
+    {
+        DataSet dsMSFTShares = await GetMSFTPurchasesFromPayslipSummarized();
+        List<StockPurchase> stockPurchases = new List<StockPurchase>();
+        StockPurchase stockPurchase = null;
+        decimal EmployeeShare =0, EmployerShare=0;
+        string remarks = string.Empty;
+        foreach (DataRow row in _epfDataTable.Rows)
+            try
+            {
+                DateTime purchaseDate;
+                if (DateTime.TryParse(row["TxnDate"].ToString(), out purchaseDate))
+                {
+                    purchaseDate = purchaseDate.Date; // Extract only the date part, discarding the time
+                }
+                else
+                {
+                    purchaseDate = DateTime.MinValue;
+                }
+                if (purchaseDate != DateTime.MinValue)
+                {
+                    EmployeeShare = row["EmployeeShare"] != DBNull.Value ? Convert.ToDecimal(row["EmployerShare"]) : 0;
+                    EmployerShare = row["EmployerShare"] != DBNull.Value ? Convert.ToDecimal(row["EmployeeShare"]) : 0;
+                    remarks = row["Remarks"] != DBNull.Value ? row["Remarks"].ToString() : string.Empty;
+                    stockPurchase = new StockPurchase
+                    {
+                        StockSymbol = "EPFO",
+                        StockName = "EPFO",
+                        Quantity = EmployeeShare + EmployerShare,
+                        PurchasePrice = 1,
+                        PurchaseDate = purchaseDate
+                    };
+
+                    if (stockPurchase.Quantity > 0 && remarks.ToLowerInvariant().Contains("cont."))
                     {
                         stockPurchase.TotalPurchaseValue = stockPurchase.Quantity;
                         stockPurchases.Add(stockPurchase);

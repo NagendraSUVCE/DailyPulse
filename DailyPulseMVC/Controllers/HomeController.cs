@@ -25,9 +25,15 @@ public class HomeController : Controller
 
 
 
-    public async Task<String> Ping()
+    public async Task<IActionResult> Ping()
     {
-        return "Connected";
+        DataTable dataTable = new DataTable();
+        dataTable.Columns.Add("Status", typeof(string));
+        dataTable.Rows.Add("Connected");
+
+        DataSet dataSet = new DataSet();
+        dataSet.Tables.Add(dataTable);
+        return View("Common", dataSet);
     }
     public async Task<IActionResult> Index()
     {
