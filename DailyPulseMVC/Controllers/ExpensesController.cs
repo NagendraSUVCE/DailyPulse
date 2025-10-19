@@ -51,7 +51,7 @@ public class ExpensesController : Controller
     public async Task<IActionResult> Reconciliation()
     {
         DataSet dsNew = new DataSet();
-        List<Reconciliation> lstReconciliations = await (new BankStatementService()).ReconcileBankStatementsWithExpenses();
+        List<Reconciliation> lstReconciliations = await _bankStatementService.ReconcileBankStatementsWithExpenses();
         
         var groupedReconciliations = lstReconciliations
             .GroupBy(r => r.Remarks)
@@ -74,8 +74,14 @@ public class ExpensesController : Controller
             groupedTable.Rows.Add(row);
         }
 
-        dsNew.Tables.Add(groupedTable);
+        // Add total count row
+        DataRow totalRow = groupedTable.NewRow();
+        totalRow["Remarks"] = "Total";
+        totalRow["Count"] = lstReconciliations.Count;
+        groupedTable.Rows.Add(totalRow);
 
+        dsNew.Tables.Add(groupedTable);
+        lstReconciliations = lstReconciliations.Where(r => r.Remarks != "Matched").ToList();
         DataTable dtReconciliations = DataTableConverter.ToDataTable(lstReconciliations);
         dsNew.Tables.Add(dtReconciliations);
 

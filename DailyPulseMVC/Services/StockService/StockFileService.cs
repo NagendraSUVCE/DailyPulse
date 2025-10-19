@@ -10,9 +10,9 @@ public class StockFileService
     public async Task<List<StockPurchase>> GetAllPurchases()
     {
         List<StockPurchase> stockPurchases = new List<StockPurchase>();
-        // stockPurchases.AddRange(await GetStockPurchasesMSFT());
-        // stockPurchases.AddRange(await GetStockPurchasesMutualFunds());
-        // stockPurchases.AddRange(await GetPPF());
+        stockPurchases.AddRange(await GetStockPurchasesMSFT());
+        stockPurchases.AddRange(await GetStockPurchasesMutualFunds());
+        stockPurchases.AddRange(await GetPPF());
         stockPurchases.AddRange(await GetEPFO());
         return stockPurchases;
     }

@@ -161,7 +161,7 @@ public class BankStatementService
                 var baseFolder = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/all Salary/Bank statements/";
 
                 List<string> strLinks = new List<string>();
-                ///*
+                /*
                 strLinks.Add(baseFolder + @"ICICI/ICICI 2013 OpTransactionHistory2013.xls");
                 strLinks.Add(baseFolder + @"ICICI/ICICI 2014 OpTransactionHistory2014.xls");
                 strLinks.Add(baseFolder + @"ICICI/ICICI 2015 OpTransactionHistory2015.xls");
@@ -172,8 +172,9 @@ public class BankStatementService
                 strLinks.Add(baseFolder + @"ICICI/ICICI 2019 2020 OpTransactionHistory09-11-2020.xls");
                 strLinks.Add(baseFolder + @"ICICI/ICICI 2020 2021 OpTransactionHistory14-06-2021.xls");
                 strLinks.Add(baseFolder + @"ICICI/ICICI 2021 2022 OpTransactionHistoryTpr16-12-2022.xls");
-                strLinks.Add(baseFolder + @"ICICI/ICICI 2022 2023 OpTransactionHistoryTpr Downloaded 27 jan 2024.xls"); //*/
-                strLinks.Add(baseFolder + @"ICICI/ICICI 2023 2024 OpTransactionHistoryTpr04-01-2025 Full year.xls");
+                strLinks.Add(baseFolder + @"ICICI/ICICI 2022 2023 OpTransactionHistoryTpr Downloaded 27 jan 2024.xls");
+                strLinks.Add(baseFolder + @"ICICI/ICICI 2023 2024 OpTransactionHistoryTpr04-01-2025 Full year.xls");*/
+                strLinks.Add(baseFolder + @"ICICI/ICICI 2025 2026 OpTransactionHistory19-10-2025.xls");
                 foreach (var strlink in strLinks)
                 {
                     lstBankStatements.AddRange(await GetBankStatementsGivenFilename(strlink
@@ -183,9 +184,9 @@ public class BankStatementService
 
                 baseFolder = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/all Salary/Bank statements/";
                 strLinks.Clear();
-                strLinks.Add(baseFolder + @"CITI AXIS/2022 2023 CITI AXIS July 22 March 23.xlsx");
+                /* strLinks.Add(baseFolder + @"CITI AXIS/2022 2023 CITI AXIS July 22 March 23.xlsx");
                 strLinks.Add(baseFolder + @"CITI AXIS/2023 2024 2023 Apr 2024 Mar CITI AXIS.xlsx");
-                strLinks.Add(baseFolder + @"CITI AXIS/2024 2025 2024 Apr 2025 Mar CITI AXIS.xlsx");
+                strLinks.Add(baseFolder + @"CITI AXIS/2024 2025 2024 Apr 2025 Mar CITI AXIS.xlsx"); */
                 foreach (var strlink in strLinks)
                 {
                     lstBankStatements.AddRange(await GetBankStatementsGivenFilename(strlink
@@ -194,7 +195,7 @@ public class BankStatementService
 
                 baseFolder = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/all Salary/Bank statements/";
                 strLinks.Clear();
-                strLinks.Add(baseFolder + @"CITI/CITI 2010.txt");
+                /*strLinks.Add(baseFolder + @"CITI/CITI 2010.txt");
                 strLinks.Add(baseFolder + @"CITI/CITI 2011.txt");
                 strLinks.Add(baseFolder + @"CITI/CITI 2012.txt");
                 strLinks.Add(baseFolder + @"CITI/CITI 2013.txt");
@@ -204,14 +205,15 @@ public class BankStatementService
                 strLinks.Add(baseFolder + @"CITI/CITI 2016 2017.txt");
                 strLinks.Add(baseFolder + @"CITI/CITI 2017 2018.txt");
                 strLinks.Add(baseFolder + @"CITI/CITI 2018 2019.txt");
-                strLinks.Add(baseFolder + @"CITI/CITI 2019 2020.txt");
+                strLinks.Add(baseFolder + @"CITI/CITI 2019 2020.txt");*/
                 foreach (var strlink in strLinks)
                 {
                     lstBankStatements.AddRange(GetBankDetailsCitiBankGivenFileName(strlink).Result);
                 }
 
                 strLinks.Clear();
-                strLinks.Add(baseFolder + @"HDFC/Acct_Statement_XXXXXXXX4998_11thOct2025_2024_2025.xls");
+                /* strLinks.Add(baseFolder + @"HDFC/Acct_Statement_XXXXXXXX4998_11thOct2025_2024_2025.xls"); */
+                strLinks.Add(baseFolder + @"HDFC/Acct_Statement_XXXXXXXX4998_11thOct2025_2025_2026.xls");
                 foreach (var strlink in strLinks)
                 {
                     lstBankStatements.AddRange(await GetBankStatementsGivenFilename(strlink
@@ -503,7 +505,7 @@ public class BankStatementService
             var matchingExpenses = lstExpenses
             .Where(expense => expense.TxnDate.Date == bankStmt.TxnDate && expense.ExpenseAmt == bankStmt.Withdrawals)
             .ToList();
-
+            reconciliationObj.BankName = bankStmt.BankName;
             if (matchingExpenses.Any())
             {
                 foreach (var expense in matchingExpenses)

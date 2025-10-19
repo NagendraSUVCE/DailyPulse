@@ -33,6 +33,7 @@ namespace Models.Finance
     public class Reconciliation
     {
         public DateTime? TxnDate { get; set; }
+        public string BankName { get; set; }
         public string TransactionRemarks { get; set; }
         public decimal BankWithdrawal { get; set; }
         public string Daily15MinLogId { get; set; }
