@@ -40,4 +40,18 @@ namespace Models.Finance
         public decimal ExpenseAmount { get; set; }
         public string Remarks { get; set; }
     }
+    public class InvestmentTransfer
+    {
+        public DateTime TxnDate { get; set; }
+        public string? Daily15MinLogId { get; set; }
+        public string? BankTransactionRemarks { get; set; }
+        public string? FromSource { get; set; }
+        public string? ToDestination { get; set; }
+        public string? TransferCategory { get; set; }
+        public string? TransferSubcategory { get; set; }
+        public string PaymentType { get; set; }
+        public string TransferVendor { get; set; }
+        public decimal? TransferAmount { get; set; }
+    }
+
 }

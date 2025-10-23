@@ -48,7 +48,7 @@ public class BankStatementService
     private const int DepositIndex = 7;
     private const int BalanceIndex = 8;
     public List<BankStmt> bankStmts = new List<BankStmt>();
-
+   
     private BankStmt GetBankStatementGivenDataRow(DataRow bankStmtRow, BankConfig bankConfig)
     {
         BankStmt bankStmtObj = new BankStmt();
@@ -226,13 +226,14 @@ public class BankStatementService
                 Console.WriteLine($"An error occurred: {ex.Message}");
                 throw;
             }
+            await (new ProcessBankStatements()).ProcessBankStatementsRuleBased(lstBankStatements);
             return lstBankStatements;
         });
     }
 
 
 
-    public async Task<List<BankStmt>> GetBankDetailsCitiBankGivenFileName(string filePath)
+    private async Task<List<BankStmt>> GetBankDetailsCitiBankGivenFileName(string filePath)
     {
         string fulltext = string.Empty;
         List<BankStmt> lstBankStatements = new List<BankStmt>();
@@ -343,7 +344,6 @@ public class BankStatementService
                     bankStmt.TxnDetails = $"Error: {ex.Message}";
                 }
             }
-            await (new ProcessBankStatements()).ProcessBankStatementsRuleBased(lstBankStatements);
             return lstBankStatements;
         });
     }
@@ -352,7 +352,7 @@ public class BankStatementService
 
   
 
-    public async Task ProcessBankStatements(BankStmt bankStmt)
+    private async Task ProcessBankStatements(BankStmt bankStmt)
     {
 
      if (bankStmt.TxnDetails.StartsWith("CORPORATE CREDIT", StringComparison.OrdinalIgnoreCase))

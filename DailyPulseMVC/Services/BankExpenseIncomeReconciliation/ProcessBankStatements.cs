@@ -22,7 +22,7 @@ public class TxnTypeRule
 
 public class ProcessBankStatements
 {
-    private string filePathExpensesPending = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/SelfCode/DatabaseInCSV/TxnTypeRules.csv";
+    private string filePathExpensesPending = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/SelfCode/DatabaseInCSV/BankStatementsTxnTypeRules.csv";
 
     public List<TxnTypeRule> TxnTypeRules { get; set; }
 
@@ -38,7 +38,7 @@ public class ProcessBankStatements
         foreach (var bankStmt in bankStmts)
         {
             var applicableRules = rules.Where(rule => rule.BankName.Equals(bankStmt.BankName, StringComparison.OrdinalIgnoreCase)).ToList();
-            foreach (var rule in rules)
+            foreach (var rule in applicableRules)
             {
                 bool conditionMatched = false;
 

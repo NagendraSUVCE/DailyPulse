@@ -15,8 +15,8 @@ namespace Models.Finance
         public decimal Balance { get; set; }
         public string? Misc { get; set; }
 
-        public string? TxnType { get; set; } // Investment/Income/Expense/Transfer
-        public string? TxnCategory { get; set; } // Salary/Bonus/Dividend/Interest/ExpenseType/TransferType
+        public string? TxnType { get; set; } // Income/Expense/Transfer
+        public string? TxnCategory { get; set; } // Investment/Salary/Bonus/Dividend/Interest/ExpenseType/TransferType/BankTransfer
         public string? TxnSubCategory { get; set; } // Subcategory of the transaction
         public string? TxnRemarks { get; set; } // Any additional remarks for the transaction
     }

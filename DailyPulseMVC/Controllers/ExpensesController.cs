@@ -82,6 +82,8 @@ public class ExpensesController : Controller
 
         dsNew.Tables.Add(groupedTable);
         lstReconciliations = lstReconciliations.Where(r => r.Remarks != "Matched").ToList();
+        lstReconciliations = lstReconciliations.Where(r => r.Remarks != "Matched with upper ceiling").ToList();
+         
         DataTable dtReconciliations = DataTableConverter.ToDataTable(lstReconciliations);
         dsNew.Tables.Add(dtReconciliations);
 
@@ -91,9 +93,9 @@ public class ExpensesController : Controller
     {
         DataSet dsNew = new DataSet();
         List<BankStmt> lstBankStmts = await _bankStatementService.GetBankStatementsForAllBanks();
-        lstBankStmts = lstBankStmts.Where(b =>b.TxnDate>=new DateTime(2024,04,01)).ToList();
+        // lstBankStmts = lstBankStmts.Where(b =>b.TxnDate>=new DateTime(2024,04,01)).ToList();
         // lstBankStmts = lstBankStmts.Where(stmt => stmt.BankName == "CITI").ToList();
-        // lstBankStmts = lstBankStmts.Where(stmt => stmt.TxnType == "ToBeFilled").ToList();
+        lstBankStmts = lstBankStmts.Where(stmt => stmt.TxnType == "ToBeFilled").ToList();
 
         DataTable dataTablePurchases = DataTableConverter.ToDataTable(lstBankStmts);
         DataTable summaryTable = new DataTable();
