@@ -7,7 +7,15 @@ public class Daily15MinLogService
     private DataSet dataSet = null;
     public Daily15MinLogService()
     {
+        if (dataSet == null)
+        {
+            InitializeDataSetAsync().Wait();
+        }
+    }
 
+    private async Task InitializeDataSetAsync()
+    {
+        dataSet = await GetDaily15MinLogFromGraphExcel();
     }
 
     public async Task<System.Data.DataSet> GetDaily15MinLogFromGraphExcel()
@@ -571,21 +579,21 @@ public class Daily15MinLogService
         foreach (var group in groupedByYearAndCategory)
         {
             var row = dataTable.NewRow();
-            row["Year"] = "Year-"+group.Key.Year;
+            row["Year"] = "Year-" + group.Key.Year;
             row["Category"] = group.Key.Category;
 
             for (int month = 1; month <= 12; month++)
             {
-            var monthlyLogs = group
-                .Where(log => log.ActivityDate?.Month == month)
-                .ToList();
+                var monthlyLogs = group
+                    .Where(log => log.ActivityDate?.Month == month)
+                    .ToList();
 
-            var totalHrs = monthlyLogs.Sum(log => log.TotalValue);
-            var daysCount = monthlyLogs.Select(log => log.ActivityDate?.Date).Distinct().Count();
+                var totalHrs = monthlyLogs.Sum(log => log.TotalValue);
+                var daysCount = monthlyLogs.Select(log => log.ActivityDate?.Date).Distinct().Count();
 
-            // Average based on the number of entries in that particular month
-            var averageHrs = daysCount > 0 ? totalHrs / daysCount : 0;
-            row[new DateTime(1, month, 1).ToString("MMM")] = averageHrs > 0 ? averageHrs : DBNull.Value;
+                // Average based on the number of entries in that particular month
+                var averageHrs = daysCount > 0 ? totalHrs / daysCount : 0;
+                row[new DateTime(1, month, 1).ToString("MMM")] = averageHrs > 0 ? averageHrs : DBNull.Value;
             }
 
             dataTable.Rows.Add(row);

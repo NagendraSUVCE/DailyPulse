@@ -1,7 +1,9 @@
 using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
-
+// Register services
+builder.Services.AddScoped<Daily15MinLogService>();
+builder.Services.AddScoped<FileManagerOneDrive.OnedriveFileManager>();
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 

@@ -11,17 +11,16 @@ public class HomeController : Controller
     // dotnet publish -c Release -o ./bin/Publish
     // dotnet build /nologo /verbosity:q /property:WarningLevel=0 /clp:ErrorsOnly
     private readonly ILogger<HomeController> _logger;
-    private Daily15MinLogService _daily15MinLogService = null;
+    private readonly Daily15MinLogService _daily15MinLogService;
+    private readonly OnedriveFileManager _onedriveFileManager;
 
-    public HomeController(ILogger<HomeController> logger)
+
+    public HomeController(ILogger<HomeController> logger, Daily15MinLogService daily15MinLogService, OnedriveFileManager onedriveFileManager)
     {
         _logger = logger;
-        if(_daily15MinLogService == null)
-        {
-            _daily15MinLogService = new Daily15MinLogService();
-        }
+        _daily15MinLogService = daily15MinLogService;
+        _onedriveFileManager = onedriveFileManager;
     }
-
 
 
 
@@ -41,15 +40,15 @@ public class HomeController : Controller
          var mailKitInitial = new MailKitClass(); // Removed as MailKitInitial is undefined
          await mailKitInitial.MailKitInitial(DateTime.Now.Date);
         //*/
-         // Fetch Fitbit data
-        
+        // Fetch Fitbit data
+
         var lstDailyLog15Min = await _daily15MinLogService.GetDaily15MinLogAsyncForYear2025();
         return View(lstDailyLog15Min);
     }
 
     public async Task<IActionResult> Daily15MinLogGroupBy()
     {
-        
+
         var lstDailyLog15Min = await _daily15MinLogService.GetDaily15MinLogAsyncForYear2025();
         DataTable dataTable = new DataTable();
         dataTable.Columns.Add("StartDate", typeof(DateTime));
@@ -61,10 +60,10 @@ public class HomeController : Controller
             .GroupBy(log => log.activityDesc)
             .Select(group => new
             {
-            ActivityDesc = group.Key,
-            StartDate = group.Min(log => log.dtActivity),
-            EndDate = group.Max(log => log.dtActivity),
-            TotalHours = group.Sum(log => log.Hrs)
+                ActivityDesc = group.Key,
+                StartDate = group.Min(log => log.dtActivity),
+                EndDate = group.Max(log => log.dtActivity),
+                TotalHours = group.Sum(log => log.Hrs)
             })
             .OrderByDescending(item => item.EndDate);
 
@@ -76,11 +75,11 @@ public class HomeController : Controller
         dataSet.Tables.Add(dataTable);
         return View("Common", dataSet);
     }
-    
+
 
     public async Task<IActionResult> Daily15MinLogThisDatePreviousYear()
     {
-        
+
         var lstDailyLog15Min = await _daily15MinLogService.GetDaily15MinLogAsync();
 
         var today = DateTime.Now;
@@ -97,10 +96,10 @@ public class HomeController : Controller
             .GroupBy(log => log.activityDesc)
             .Select(group => new
             {
-            ActivityDesc = group.Key,
-            StartDate = group.Min(log => log.dtActivity),
-            EndDate = group.Max(log => log.dtActivity),
-            TotalHours = group.Sum(log => log.Hrs)
+                ActivityDesc = group.Key,
+                StartDate = group.Min(log => log.dtActivity),
+                EndDate = group.Max(log => log.dtActivity),
+                TotalHours = group.Sum(log => log.Hrs)
             })
             .OrderByDescending(item => item.EndDate);
 
@@ -122,7 +121,7 @@ public class HomeController : Controller
     public async Task<IActionResult> OnedriveFileTotalSize()
     {
         var filePath = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/T//Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/T";
-        DataTable dataTable = (new OnedriveFileManager()).GetFolderSizes(filePath);
+        DataTable dataTable = _onedriveFileManager.GetFolderSizes(filePath);
         DataSet dataSet = new DataSet();
         dataSet.Tables.Add(dataTable);
         return View("Common", dataSet);

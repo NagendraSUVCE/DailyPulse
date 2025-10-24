@@ -8,6 +8,11 @@ namespace FileManagerOneDrive
 {
     public class OnedriveFileManager
     {
+    public OnedriveFileManager()
+    {
+
+    }
+
         public DataTable GetFolderSizes(string baseFolderPath)
         {
             if (string.IsNullOrEmpty(baseFolderPath) || !Directory.Exists(baseFolderPath))
