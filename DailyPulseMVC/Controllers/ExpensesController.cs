@@ -95,7 +95,9 @@ public class ExpensesController : Controller
         List<BankStmt> lstBankStmts = await _bankStatementService.GetBankStatementsForAllBanks();
         // lstBankStmts = lstBankStmts.Where(b =>b.TxnDate>=new DateTime(2024,04,01)).ToList();
         // lstBankStmts = lstBankStmts.Where(stmt => stmt.BankName == "CITI").ToList();
+        int totalCount = lstBankStmts.Count;
         lstBankStmts = lstBankStmts.Where(stmt => stmt.TxnType == "ToBeFilled").ToList();
+        int totalCountRuleMatched = totalCount - lstBankStmts.Count;
 
         DataTable dataTablePurchases = DataTableConverter.ToDataTable(lstBankStmts);
         DataTable summaryTable = new DataTable();
@@ -107,8 +109,20 @@ public class ExpensesController : Controller
         summaryRow["NameOfTable"] = dataTablePurchases.TableName;
         summaryRow["CurrentDateTime"] = DateTime.Now;
         summaryRow["NumberOfRows"] = lstBankStmts.Count;
-
         summaryTable.Rows.Add(summaryRow);
+
+        summaryRow = summaryTable.NewRow();
+        summaryRow["NameOfTable"] = "TotalRows";
+        summaryRow["CurrentDateTime"] = DateTime.Now;
+        summaryRow["NumberOfRows"] = totalCount;
+        summaryTable.Rows.Add(summaryRow);
+        
+        summaryRow = summaryTable.NewRow();
+        summaryRow["NameOfTable"] = "totalCountRuleMatched";
+        summaryRow["CurrentDateTime"] = DateTime.Now;
+        summaryRow["NumberOfRows"] = totalCountRuleMatched;
+        summaryTable.Rows.Add(summaryRow);
+        
         dsNew.Tables.Add(summaryTable);
         dsNew.Tables.Add(dataTablePurchases);
         return View("Common", dsNew);
