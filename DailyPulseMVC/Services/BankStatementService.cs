@@ -168,12 +168,12 @@ public class BankStatementService
                 strLinks.Add(baseFolder + @"ICICI/ICICI 2016 OpTransactionHistory2016.xls");
                 strLinks.Add(baseFolder + @"ICICI/ICICI 2017 01 03 Jan To Mar OpTransactionHistory14-06-2021.xls");
                 strLinks.Add(baseFolder + @"ICICI/ICICI 2017 2018 OpTransactionHistory14-06-2021.xls");
-                strLinks.Add(baseFolder + @"ICICI/ICICI 2018 2019 OpTransactionHistory30-05-2019.xls");
+                strLinks.Add(baseFolder + @"ICICI/ICICI 2018 2019 OpTransactionHistory30-05-2019.xls");*/
                 strLinks.Add(baseFolder + @"ICICI/ICICI 2019 2020 OpTransactionHistory09-11-2020.xls");
                 strLinks.Add(baseFolder + @"ICICI/ICICI 2020 2021 OpTransactionHistory14-06-2021.xls");
                 strLinks.Add(baseFolder + @"ICICI/ICICI 2021 2022 OpTransactionHistoryTpr16-12-2022.xls");
                 strLinks.Add(baseFolder + @"ICICI/ICICI 2022 2023 OpTransactionHistoryTpr Downloaded 27 jan 2024.xls");
-                strLinks.Add(baseFolder + @"ICICI/ICICI 2023 2024 OpTransactionHistoryTpr04-01-2025 Full year.xls");*/
+                strLinks.Add(baseFolder + @"ICICI/ICICI 2023 2024 OpTransactionHistoryTpr04-01-2025 Full year.xls");
                 strLinks.Add(baseFolder + @"ICICI/ICICI 2025 2026 OpTransactionHistory19-10-2025.xls");
                 foreach (var strlink in strLinks)
                 {
@@ -212,7 +212,8 @@ public class BankStatementService
                 }
 
                 strLinks.Clear();
-                /* strLinks.Add(baseFolder + @"HDFC/Acct_Statement_XXXXXXXX4998_11thOct2025_2024_2025.xls"); */
+                /* */
+                strLinks.Add(baseFolder + @"HDFC/Acct_Statement_XXXXXXXX4998_11thOct2025_2024_2025.xls");
                 strLinks.Add(baseFolder + @"HDFC/Acct_Statement_XXXXXXXX4998_11thOct2025_2025_2026.xls");
                 foreach (var strlink in strLinks)
                 {
