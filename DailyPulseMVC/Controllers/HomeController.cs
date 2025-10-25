@@ -83,16 +83,27 @@ public class HomeController : Controller
         var lstDailyLog15Min = await _daily15MinLogService.GetDaily15MinLogAsync();
 
         var today = DateTime.Now;
-        lstDailyLog15Min = lstDailyLog15Min
-            .Where(log => log.dtActivity.Month == today.Month && log.dtActivity.Day == today.Day)
-            .ToList();
-        DataTable dataTable = new DataTable();
-        dataTable.Columns.Add("StartDate", typeof(DateTime));
-        dataTable.Columns.Add("EndDate", typeof(DateTime));
-        dataTable.Columns.Add("ActivityDesc", typeof(string));
-        dataTable.Columns.Add("TotalHours", typeof(double));
+        DataSet dataSet = new DataSet();
 
-        var groupedData = lstDailyLog15Min
+        // Group logs by year
+        var logsGroupedByYear = lstDailyLog15Min
+            .GroupBy(log => log.dtActivity.Year)
+            .OrderByDescending(group => group.Key);
+
+        foreach (var yearGroup in logsGroupedByYear)
+        {
+            var logsForThisYear = yearGroup
+            .Where(log => log.dtActivity.Month == today.Month && log.dtActivity.Day == today.Day)
+            .OrderByDescending(log => log.dtActivity.Year)
+            .ToList();
+
+            DataTable dataTable = new DataTable($"Year_{yearGroup.Key}");
+            dataTable.Columns.Add("StartDate", typeof(DateTime));
+            dataTable.Columns.Add("EndDate", typeof(DateTime));
+            dataTable.Columns.Add("ActivityDesc", typeof(string));
+            dataTable.Columns.Add("TotalHours", typeof(double));
+
+            var groupedData = logsForThisYear
             .GroupBy(log => log.activityDesc)
             .Select(group => new
             {
@@ -103,12 +114,87 @@ public class HomeController : Controller
             })
             .OrderByDescending(item => item.EndDate);
 
-        foreach (var item in groupedData)
-        {
+            foreach (var item in groupedData)
+            {
             dataTable.Rows.Add(item.StartDate, item.EndDate, item.ActivityDesc, item.TotalHours);
+            }
+
+            dataSet.Tables.Add(dataTable);
         }
+
+        return View("Common", dataSet);
+    }
+    public async Task<IActionResult> Daily15MinLogThisDatePreviousYearGroupedBy6Hours()
+    {
+
+        var lstDailyLog15Min = await _daily15MinLogService.GetDaily15MinLogAsync();
+        var today = DateTime.Now;
         DataSet dataSet = new DataSet();
-        dataSet.Tables.Add(dataTable);
+
+        // Group logs by year
+        var logsGroupedByYear = lstDailyLog15Min
+            .GroupBy(log => log.dtActivity.Year)
+            .OrderByDescending(group => group.Key);
+
+        foreach (var yearGroup in logsGroupedByYear)
+        {
+            var logsForThisYear = yearGroup
+            .Where(log => log.dtActivity.Month == today.Month && log.dtActivity.Day == today.Day)
+            .ToList();
+
+            DataTable dataTable = new DataTable($"Year_{yearGroup.Key}");
+            dataTable.Columns.Add("ActivityDesc_0_6", typeof(string));
+            dataTable.Columns.Add("TotalHours_0_6", typeof(double));
+            dataTable.Columns.Add("ActivityDesc_6_12", typeof(string));
+            dataTable.Columns.Add("TotalHours_6_12", typeof(double));
+            dataTable.Columns.Add("ActivityDesc_12_18", typeof(string));
+            dataTable.Columns.Add("TotalHours_12_18", typeof(double));
+            dataTable.Columns.Add("ActivityDesc_18_24", typeof(string));
+            dataTable.Columns.Add("TotalHours_18_24", typeof(double));
+
+            // Group data by time slots
+            var groupedData = logsForThisYear
+            .GroupBy(log => new { log.activityDesc, TimeSlot = log.dtActivity.Hour / 6 })
+            .Select(group => new
+            {
+                ActivityDesc = group.Key.activityDesc,
+                TimeSlot = group.Key.TimeSlot,
+                TotalHours = group.Sum(log => log.Hrs)
+            })
+            .GroupBy(item => item.TimeSlot)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(item => new { item.ActivityDesc, item.TotalHours }).ToList()
+            );
+
+            // Determine the maximum number of rows needed for any time slot
+            int maxRows = groupedData.Values.Max(list => list.Count);
+
+            for (int i = 0; i < maxRows; i++)
+            {
+            var row = dataTable.NewRow();
+
+            for (int timeSlot = 0; timeSlot < 4; timeSlot++)
+            {
+                if (groupedData.ContainsKey(timeSlot) && i < groupedData[timeSlot].Count)
+                {
+                var activity = groupedData[timeSlot][i];
+                row[$"ActivityDesc_{timeSlot * 6}_{(timeSlot + 1) * 6}"] = activity.ActivityDesc;
+                row[$"TotalHours_{timeSlot * 6}_{(timeSlot + 1) * 6}"] = activity.TotalHours;
+                }
+                else
+                {
+                row[$"ActivityDesc_{timeSlot * 6}_{(timeSlot + 1) * 6}"] = string.Empty;
+                row[$"TotalHours_{timeSlot * 6}_{(timeSlot + 1) * 6}"] = 0.0;
+                }
+            }
+
+            dataTable.Rows.Add(row);
+            }
+
+            dataSet.Tables.Add(dataTable);
+        }
+
         return View("Common", dataSet);
     }
     public async Task<IActionResult> FileDetails()

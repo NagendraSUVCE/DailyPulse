@@ -9,7 +9,7 @@ public class Daily15MinLogService
     {
         if (dataSet == null)
         {
-            InitializeDataSetAsync().Wait();
+            // InitializeDataSetAsync().Wait();
         }
     }
 
