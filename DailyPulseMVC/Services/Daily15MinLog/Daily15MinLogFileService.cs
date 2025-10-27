@@ -2,6 +2,7 @@
 using Models.DailyLog;
 using DailyPulseMVC.Models; // Add this if StreakResult exists in the Models namespace.
 using System.Data; // Required for DataTable
+using System.Globalization; // Required for CultureInfo
 
 namespace DailyPulseMVC.Services
 {
@@ -21,26 +22,35 @@ namespace DailyPulseMVC.Services
             _csvPath = $@"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/SelfCode/DatabaseInCSV/{StreakResultFileName}";
             folderPath = @"Nagendra/SelfCode/DatabaseInCSV";
         }
-
-        public async Task<DataTable> SaveStreakResultToFile(List<StreakResult> streakResults)
+        public async Task SaveLogSummaryForEachDayToFile(List<DailyLogSummaryForEachDay> lstDailyLogSummaryForEachDay)
         {
-            DataTable streakResultsDatatable = DataTableConverter.ToDataTable(streakResults);
-            await GraphFileUtility.CreateTemporaryFileInLocal(folderPath, StreakResultFileName, _tempStreakResultFileName);
-
-/*
-            DataTableConverter.DataTableToCsv(streakResultsDatatable
-            , @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/SelfCode/DatabaseInCSV/"
-            , "StreakResults.csv", false);
-            */
-            DataTableConverter.DataTableToCsv(streakResultsDatatable
-            , ""
-            , _tempStreakResultFileName, false);
-            await UploadDataToGraphAsync();
-               if (File.Exists(_tempStreakResultFileName))
+            string logSummaryForEachDayCSVFilePath = "DailyLogSummaryForEachDay.csv";
+            string temp_logSummaryForEachDayCSVFilePath = $"temp_{logSummaryForEachDayCSVFilePath}";
+            await GraphFileUtility.CreateTemporaryFileInLocal(folderPath, logSummaryForEachDayCSVFilePath, temp_logSummaryForEachDayCSVFilePath);
+            CreateCsvFromList(lstDailyLogSummaryForEachDay, temp_logSummaryForEachDayCSVFilePath);
+            await GraphFileUtility.UploadFile(folderPath, logSummaryForEachDayCSVFilePath, temp_logSummaryForEachDayCSVFilePath);
+            if (File.Exists(temp_logSummaryForEachDayCSVFilePath))
             {
-                File.Delete(_tempStreakResultFileName);
+                File.Delete(temp_logSummaryForEachDayCSVFilePath);
             }
-            return streakResultsDatatable;
+        }
+        private void CreateCsvFromList(List<DailyLogSummaryForEachDay> lstDailyLogSummaryForEachDay, string filePath)
+        {
+            using (var writer = new StreamWriter(filePath))
+            {
+                // Add headers
+                writer.WriteLine("Category,ActivityDate,TotalValue");
+
+                // Add data
+                foreach (var expensesPendingObj in lstDailyLogSummaryForEachDay)
+                {
+                    var lineToAppend = $"{expensesPendingObj.Category}," +
+                                         $"{expensesPendingObj.ActivityDate.GetValueOrDefault().ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)}," +
+                                         $"{expensesPendingObj.TotalValue}";
+
+                    writer.WriteLine(lineToAppend);
+                }
+            }
         }
 
         public async Task UploadDataToGraphAsync()

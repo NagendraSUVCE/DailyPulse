@@ -56,7 +56,8 @@ public static class DataTableConverter
             // Write rows
             foreach (DataRow row in dataTable.Rows)
             {
-                string rowLine = string.Join(",", row.ItemArray.Select(item => item?.ToString() ?? string.Empty));
+                string rowLine = string.Join(",", row.ItemArray.Select(item => 
+                    item is DateTime dateTime ? dateTime.ToString("yyyy-MM-dd HH:mm:ss") : item?.ToString() ?? string.Empty));
                 writer.WriteLine(rowLine);
             }
         }

@@ -213,7 +213,9 @@ public class Daily15MinLogService
     {
         var categories = new[] { "SelfHelp", "SelfCode", "SelfTech", "SelfSong", "FitbitDailySteps" };
         List<DailyLogSummaryForEachDay> lstDailyLogSummaryForEachDay = await GetDailyLogSummaryForEachDaysAsync();
-        SaveDailyLogSummaryForEachDayToCSV(lstDailyLogSummaryForEachDay);
+
+        await (new Daily15MinLogFileService()).SaveLogSummaryForEachDayToFile(lstDailyLogSummaryForEachDay);
+        
         // Group data by year and category
         var groupedData = lstDailyLogSummaryForEachDay
             .Where(log => categories.Contains(log.Category))
@@ -551,15 +553,6 @@ public class Daily15MinLogService
         return validations;
     }
 
-    private static void SaveDailyLogSummaryForEachDayToCSV(List<DailyLogSummaryForEachDay> lstDailyLogSummaryForEachDay)
-    {
-        /* DataTable dataTable = DataTableConverter.ToDataTable(lstDailyLogSummaryForEachDay);
-         string baseFolder = "wwwroot\\files\\Daily15MinLog";
-         string fileName = "DailyLogSummaryForEachDay.csv";
-         bool overwriteAllContents = true;
-         DataTableConverter.DataTableToCsv(dataTable, baseFolder, fileName, overwriteAllContents);
-         */
-    }
 
     private DataTable GetMonthWiseAverageForEachCategory(List<DailyLogSummaryForEachDay> lstDailyLogSummaryForEachDay)
     {

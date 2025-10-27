@@ -1,0 +1,1 @@
+skill_list = ["Python", "Data Analysis", "Pandas", "NumPy", "Matplotlib"]
