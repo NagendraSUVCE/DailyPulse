@@ -195,7 +195,8 @@ public class BankStatementService
 
                 baseFolder = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/all Salary/Bank statements/";
                 strLinks.Clear();
-                /*strLinks.Add(baseFolder + @"CITI/CITI 2010.txt");
+                /**/
+                strLinks.Add(baseFolder + @"CITI/CITI 2010.txt");
                 strLinks.Add(baseFolder + @"CITI/CITI 2011.txt");
                 strLinks.Add(baseFolder + @"CITI/CITI 2012.txt");
                 strLinks.Add(baseFolder + @"CITI/CITI 2013.txt");
@@ -205,7 +206,7 @@ public class BankStatementService
                 strLinks.Add(baseFolder + @"CITI/CITI 2016 2017.txt");
                 strLinks.Add(baseFolder + @"CITI/CITI 2017 2018.txt");
                 strLinks.Add(baseFolder + @"CITI/CITI 2018 2019.txt");
-                strLinks.Add(baseFolder + @"CITI/CITI 2019 2020.txt");*/
+                strLinks.Add(baseFolder + @"CITI/CITI 2019 2020.txt");
                 foreach (var strlink in strLinks)
                 {
                     lstBankStatements.AddRange(GetBankDetailsCitiBankGivenFileName(strlink).Result);
