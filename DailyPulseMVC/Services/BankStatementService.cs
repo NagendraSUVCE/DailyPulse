@@ -48,7 +48,7 @@ public class BankStatementService
     private const int DepositIndex = 7;
     private const int BalanceIndex = 8;
     public List<BankStmt> bankStmts = new List<BankStmt>();
-   
+
     private BankStmt GetBankStatementGivenDataRow(DataRow bankStmtRow, BankConfig bankConfig)
     {
         BankStmt bankStmtObj = new BankStmt();
@@ -126,7 +126,7 @@ public class BankStatementService
         }
         return lstBankStmt;
     }
-    
+
 
     private async Task<System.Data.DataSet> GetBankStatementUsingGraph(string baseFolder, string oneLevelUpFolder, string fileNameOnly)
     {
@@ -184,9 +184,9 @@ public class BankStatementService
 
                 baseFolder = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/all Salary/Bank statements/";
                 strLinks.Clear();
-                /* strLinks.Add(baseFolder + @"CITI AXIS/2022 2023 CITI AXIS July 22 March 23.xlsx");
+                strLinks.Add(baseFolder + @"CITI AXIS/2022 2023 CITI AXIS July 22 March 23.xlsx");
                 strLinks.Add(baseFolder + @"CITI AXIS/2023 2024 2023 Apr 2024 Mar CITI AXIS.xlsx");
-                strLinks.Add(baseFolder + @"CITI AXIS/2024 2025 2024 Apr 2025 Mar CITI AXIS.xlsx"); */
+                strLinks.Add(baseFolder + @"CITI AXIS/2024 2025 2024 Apr 2025 Mar CITI AXIS.xlsx"); 
                 foreach (var strlink in strLinks)
                 {
                     lstBankStatements.AddRange(await GetBankStatementsGivenFilename(strlink
@@ -243,7 +243,7 @@ public class BankStatementService
         {
             try
             {
-                
+
                 if (File.Exists(filePath))
                 {
                     var lines = File.ReadAllLines(filePath);
@@ -339,7 +339,7 @@ public class BankStatementService
                     bankStmt.TxnDetails = bankStmt.TxnDetails.Trim();
                     bankStmt.Misc = string.Empty;
 
-                   // await ProcessBankStatements(bankStmt);
+                    // await ProcessBankStatements(bankStmt);
                 }
                 catch (Exception ex)
                 {
@@ -350,14 +350,14 @@ public class BankStatementService
         });
     }
 
-   
 
-  
+
+
 
     private async Task ProcessBankStatements(BankStmt bankStmt)
     {
 
-     if (bankStmt.TxnDetails.StartsWith("CORPORATE CREDIT", StringComparison.OrdinalIgnoreCase))
+        if (bankStmt.TxnDetails.StartsWith("CORPORATE CREDIT", StringComparison.OrdinalIgnoreCase))
         {
             bankStmt.TxnType = "Income";
             bankStmt.TxnCategory = "Salary";
@@ -512,13 +512,13 @@ public class BankStatementService
             {
                 foreach (var expense in matchingExpenses)
                 {
-                    reconciliationObj  = new Reconciliation();
+                    reconciliationObj = new Reconciliation();
                     reconciliationObj.TxnDate = bankStmt.TxnDate;
                     reconciliationObj.TransactionRemarks = bankStmt.TxnDetails;
                     reconciliationObj.BankWithdrawal = bankStmt.Withdrawals;
                     reconciliationObj.Daily15MinLogId = expense.Daily15MinLogId;
                     reconciliationObj.ExpenseAmount = expense.ExpenseAmt;
-                    reconciliationObj.Remarks = "Matched";
+                    reconciliationObj.Remarks = "MatchedExpense";
                     lstReconciliation.Add(reconciliationObj);
                 }
             }
@@ -533,28 +533,39 @@ public class BankStatementService
                 {
                     foreach (var expense in upperCeilingMatch)
                     {
-                    reconciliationObj  = new Reconciliation();
+                        reconciliationObj = new Reconciliation();
                         reconciliationObj.TxnDate = bankStmt.TxnDate;
                         reconciliationObj.TransactionRemarks = bankStmt.TxnDetails;
                         reconciliationObj.BankWithdrawal = bankStmt.Withdrawals;
                         reconciliationObj.Daily15MinLogId = expense.Daily15MinLogId;
                         reconciliationObj.ExpenseAmount = expense.ExpenseAmt;
-                        reconciliationObj.Remarks = "Matched with upper ceiling";
+                        reconciliationObj.Remarks = "Matched Expense with upper ceiling";
                         lstReconciliation.Add(reconciliationObj);
                     }
                 }
                 else
                 {
-                    reconciliationObj  = new Reconciliation();
+                    reconciliationObj = new Reconciliation();
                     reconciliationObj.TxnDate = bankStmt.TxnDate;
                     reconciliationObj.TransactionRemarks = bankStmt.TxnDetails;
                     reconciliationObj.BankWithdrawal = bankStmt.Withdrawals;
                     reconciliationObj.Daily15MinLogId = string.Empty;
                     reconciliationObj.Remarks = "No matching expense found";
-                        lstReconciliation.Add(reconciliationObj);
+                    lstReconciliation.Add(reconciliationObj);
                 }
             }
         }
+        await ReconcileBankStatementsWithTransferAndInvestment(lstReconciliation);
         return lstReconciliation;
+    }
+    public async Task ReconcileBankStatementsWithTransferAndInvestment(List<Reconciliation> lstReconciliation)
+    {
+        foreach (var reconciliation in lstReconciliation)
+        {
+            if (reconciliation.Remarks == "No matching expense found")
+            {
+                reconciliation.Remarks = "No matching expense found Inside Transfer investment";
+            }
+        }
     }
 }

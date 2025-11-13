@@ -12,7 +12,7 @@ using Models.Finance;
 public class TxnTypeRule
 {
     public string BankName { get; set; }
-        public string Condition { get; set; }
+    public string Condition { get; set; }
     public string ConditionValue { get; set; }
     public string SecondaryCondition { get; set; }
     public string TxnType { get; set; }

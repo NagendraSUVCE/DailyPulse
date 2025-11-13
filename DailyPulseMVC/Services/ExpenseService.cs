@@ -69,7 +69,7 @@ public class ExpensesService
         expensesPendingObj.AccountingPending = 0;
         expensesPendingObj.ExpensesLoggingPending = 0;
         expensesPendingObj.ExpenseLoggingAutomatic = 0;
-        expensesPendingObj.ExpenseMisc = "ToBeFilledVisualStudioCode";
+        expensesPendingObj.ExpenseMisc = "";
 
         // var filePathExpenses = @"/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/all Salary/all Payslips/all Payslips Summarized.xlsx";
         // DataSet dataSetExpenses = Utility.Excel.ExcelUtilities.GetDataFromExcelNewWay(filePathExpenses);
@@ -113,7 +113,7 @@ public class ExpensesService
             ExpensesCustom expensesObj = new ExpensesCustom();
             expensesObj.TxnDate = log.dtActivity;
             expensesObj.Daily15MinLogId = log.activityDesc;
-            expensesObj.ExpneseDescription = "ToBeFilledVisualStudioCode";
+            expensesObj.ExpneseDescription = "";
             UpdateExpensesPendingObject(expensesObj);
             expensesPendingObj.ExpensesLoggingPending++;
             expensesPendingObj.ExpenseLoggingAutomatic++;

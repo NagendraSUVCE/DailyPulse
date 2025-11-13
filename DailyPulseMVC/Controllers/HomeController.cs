@@ -8,6 +8,8 @@ namespace DailyPulseMVC.Controllers;
 
 public class HomeController : Controller
 {
+    // az login
+    // az login --tenant "66c27865-2b61-409c-965a-b99d27699f72"   
     // dotnet publish -c Release -o ./bin/Publish
     // dotnet build /nologo /verbosity:q /property:WarningLevel=0 /clp:ErrorsOnly
     private readonly ILogger<HomeController> _logger;
