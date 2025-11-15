@@ -20,7 +20,7 @@ public class ExpensesController : Controller
 
     public async Task<IActionResult> Common()
     {
-       DataSet dataSet = (new ExpensesService()).GetPayslipsSummarizedGraphWay().Result;
+        DataSet dataSet = (new ExpensesService()).GetPayslipsSummarizedGraphWay().Result;
         DataTable dataTable1 = dataSet.Tables[0];
         foreach (DataTable table in dataSet.Tables)
         {
@@ -52,13 +52,13 @@ public class ExpensesController : Controller
     {
         DataSet dsNew = new DataSet();
         List<Reconciliation> lstReconciliations = await _bankStatementService.ReconcileBankStatementsWithExpenses();
-        
+
         var groupedReconciliations = lstReconciliations
             .GroupBy(r => r.Remarks)
             .Select(g => new
             {
-            Remarks = g.Key,
-            Count = g.Count()
+                Remarks = g.Key,
+                Count = g.Count()
             })
             .ToList();
 
@@ -83,7 +83,7 @@ public class ExpensesController : Controller
         dsNew.Tables.Add(groupedTable);
         lstReconciliations = lstReconciliations.Where(r => r.Remarks != "Matched").ToList();
         lstReconciliations = lstReconciliations.Where(r => r.Remarks != "Matched with upper ceiling").ToList();
-         
+
         DataTable dtReconciliations = DataTableConverter.ToDataTable(lstReconciliations);
         dsNew.Tables.Add(dtReconciliations);
 
@@ -93,6 +93,7 @@ public class ExpensesController : Controller
     {
         DataSet dsNew = new DataSet();
         List<BankStmt> lstBankStmts = await _bankStatementService.GetBankStatementsForAllBanks();
+        DataTable dataTableBankStmtsTxnType = ListOfBankStatementsGroupByTxnType(lstBankStmts);
         // lstBankStmts = lstBankStmts.Where(b =>b.TxnDate>=new DateTime(2024,04,01)).ToList();
         // lstBankStmts = lstBankStmts.Where(stmt => stmt.BankName == "CITI").ToList();
         int totalCount = lstBankStmts.Count;
@@ -116,18 +117,47 @@ public class ExpensesController : Controller
         summaryRow["CurrentDateTime"] = DateTime.Now;
         summaryRow["NumberOfRows"] = totalCount;
         summaryTable.Rows.Add(summaryRow);
-        
+
         summaryRow = summaryTable.NewRow();
         summaryRow["NameOfTable"] = "totalCountRuleMatched";
         summaryRow["CurrentDateTime"] = DateTime.Now;
         summaryRow["NumberOfRows"] = totalCountRuleMatched;
         summaryTable.Rows.Add(summaryRow);
-        
+
         dsNew.Tables.Add(summaryTable);
+        dsNew.Tables.Add(dataTableBankStmtsTxnType);
         dsNew.Tables.Add(dataTablePurchases);
         return View("Common", dsNew);
     }
 
+    private DataTable ListOfBankStatementsGroupByTxnType(List<BankStmt> lstBankStmt)
+    {
+        DataTable dataTable = new DataTable("BankStatementsGroupedByTxnType");
+        dataTable.Columns.Add("TxnType", typeof(string));
+        dataTable.Columns.Add("Count", typeof(int));
+        dataTable.Columns.Add("TotalAmount", typeof(decimal));
+
+        var groupedData = lstBankStmt
+            .GroupBy(stmt => stmt.TxnType)
+            .Select(g => new
+            {
+                TxnType = g.Key,
+                Count = g.Count(),
+                TotalAmount = g.Sum(stmt => stmt.Deposits + stmt.Withdrawals)
+            })
+            .ToList();
+
+        foreach (var item in groupedData)
+        {
+            DataRow row = dataTable.NewRow();
+            row["TxnType"] = item.TxnType;
+            row["Count"] = item.Count;
+            row["TotalAmount"] = item.TotalAmount;
+            dataTable.Rows.Add(row);
+        }
+
+        return dataTable;
+    }
     public IActionResult Privacy()
     {
         return View();
