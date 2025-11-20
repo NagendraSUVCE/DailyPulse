@@ -38,6 +38,7 @@ namespace Models.Finance
         public decimal BankWithdrawal { get; set; }
         public string Daily15MinLogId { get; set; }
         public decimal ExpenseAmount { get; set; }
+        public string BankStatementTxnType { get; set; }
         public string Remarks { get; set; }
     }
     public class InvestmentTransfer

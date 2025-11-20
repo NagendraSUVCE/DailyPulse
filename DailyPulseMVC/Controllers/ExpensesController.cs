@@ -3,6 +3,7 @@ using System.Data;
 using System.Diagnostics;
 using DailyPulseMVC.Models;
 using Models.Finance;
+using Microsoft.Kiota.Abstractions;
 
 namespace DailyPulseMVC.Controllers;
 
@@ -53,6 +54,8 @@ public class ExpensesController : Controller
         DataSet dsNew = new DataSet();
         List<Reconciliation> lstReconciliations = await _bankStatementService.ReconcileBankStatementsWithExpenses();
 
+        // lstReconciliations = lstReconciliations.Where(r => r.TxnDate > new DateTime(2025, 03, 31)).ToList();
+
         var groupedReconciliations = lstReconciliations
             .GroupBy(r => r.Remarks)
             .Select(g => new
@@ -81,9 +84,9 @@ public class ExpensesController : Controller
         groupedTable.Rows.Add(totalRow);
 
         dsNew.Tables.Add(groupedTable);
-        lstReconciliations = lstReconciliations.Where(r => r.Remarks != "Matched").ToList();
-        lstReconciliations = lstReconciliations.Where(r => r.Remarks != "Matched with upper ceiling").ToList();
-
+        // lstReconciliations = lstReconciliations.Where(r => r.Remarks != "MatchedExpense").ToList();
+        // lstReconciliations = lstReconciliations.Where(r => r.Remarks != "Matched Expense with upper ceiling").ToList();
+        lstReconciliations = lstReconciliations.Where(r => r.TxnDate.HasValue && r.TxnDate.Value.Year == 2020).ToList();
         DataTable dtReconciliations = DataTableConverter.ToDataTable(lstReconciliations);
         dsNew.Tables.Add(dtReconciliations);
 

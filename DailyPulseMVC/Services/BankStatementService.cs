@@ -186,7 +186,7 @@ public class BankStatementService
                 strLinks.Clear();
                 strLinks.Add(baseFolder + @"CITI AXIS/2022 2023 CITI AXIS July 22 March 23.xlsx");
                 strLinks.Add(baseFolder + @"CITI AXIS/2023 2024 2023 Apr 2024 Mar CITI AXIS.xlsx");
-                strLinks.Add(baseFolder + @"CITI AXIS/2024 2025 2024 Apr 2025 Mar CITI AXIS.xlsx"); 
+                strLinks.Add(baseFolder + @"CITI AXIS/2024 2025 2024 Apr 2025 Mar CITI AXIS.xlsx");
                 foreach (var strlink in strLinks)
                 {
                     lstBankStatements.AddRange(await GetBankStatementsGivenFilename(strlink
@@ -506,18 +506,24 @@ public class BankStatementService
                 continue; // Skip processing if TxnDate is null or default
             }
 
+            if (bankStmt.TxnType.ToLowerInvariant() != "expense")
+            {
+                continue; // Skip processing if TxnDate is null or default
+            }
+
             var matchingExpenses = lstExpenses
             .Where(expense => expense.TxnDate.Date == bankStmt.TxnDate && expense.ExpenseAmt == bankStmt.Withdrawals)
             .ToList();
+            reconciliationObj = new Reconciliation();
             reconciliationObj.BankName = bankStmt.BankName;
+            reconciliationObj.TxnDate = bankStmt.TxnDate;
+            reconciliationObj.TransactionRemarks = bankStmt.TxnDetails;
+            reconciliationObj.BankWithdrawal = bankStmt.Withdrawals;
+            reconciliationObj.BankStatementTxnType = bankStmt.TxnType;
             if (matchingExpenses.Any())
             {
                 foreach (var expense in matchingExpenses)
                 {
-                    reconciliationObj = new Reconciliation();
-                    reconciliationObj.TxnDate = bankStmt.TxnDate;
-                    reconciliationObj.TransactionRemarks = bankStmt.TxnDetails;
-                    reconciliationObj.BankWithdrawal = bankStmt.Withdrawals;
                     reconciliationObj.Daily15MinLogId = expense.Daily15MinLogId;
                     reconciliationObj.ExpenseAmount = expense.ExpenseAmt;
                     reconciliationObj.Remarks = "MatchedExpense";
@@ -535,10 +541,6 @@ public class BankStatementService
                 {
                     foreach (var expense in upperCeilingMatch)
                     {
-                        reconciliationObj = new Reconciliation();
-                        reconciliationObj.TxnDate = bankStmt.TxnDate;
-                        reconciliationObj.TransactionRemarks = bankStmt.TxnDetails;
-                        reconciliationObj.BankWithdrawal = bankStmt.Withdrawals;
                         reconciliationObj.Daily15MinLogId = expense.Daily15MinLogId;
                         reconciliationObj.ExpenseAmount = expense.ExpenseAmt;
                         reconciliationObj.Remarks = "Matched Expense with upper ceiling";
@@ -547,10 +549,6 @@ public class BankStatementService
                 }
                 else
                 {
-                    reconciliationObj = new Reconciliation();
-                    reconciliationObj.TxnDate = bankStmt.TxnDate;
-                    reconciliationObj.TransactionRemarks = bankStmt.TxnDetails;
-                    reconciliationObj.BankWithdrawal = bankStmt.Withdrawals;
                     reconciliationObj.Daily15MinLogId = string.Empty;
                     reconciliationObj.Remarks = "No matching expense found";
                     lstReconciliation.Add(reconciliationObj);
