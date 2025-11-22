@@ -11,8 +11,9 @@ public class HomeController : Controller
     // az logout
     // az login
     // az login --tenant "66c27865-2b61-409c-965a-b99d27699f72"   
-    // dotnet publish -c Release -o ./bin/Publish
     // dotnet build /nologo /verbosity:q /property:WarningLevel=0 /clp:ErrorsOnly
+    // dotnet publish -c Release -o ./bin/Publish
+    // 
     private readonly ILogger<HomeController> _logger;
     private readonly Daily15MinLogService _daily15MinLogService;
     private readonly OnedriveFileManager _onedriveFileManager;
@@ -119,7 +120,7 @@ public class HomeController : Controller
 
             foreach (var item in groupedData)
             {
-            dataTable.Rows.Add(item.StartDate, item.EndDate, item.ActivityDesc, item.TotalHours);
+                dataTable.Rows.Add(item.StartDate, item.EndDate, item.ActivityDesc, item.TotalHours);
             }
 
             dataSet.Tables.Add(dataTable);
@@ -175,24 +176,24 @@ public class HomeController : Controller
 
             for (int i = 0; i < maxRows; i++)
             {
-            var row = dataTable.NewRow();
+                var row = dataTable.NewRow();
 
-            for (int timeSlot = 0; timeSlot < 4; timeSlot++)
-            {
-                if (groupedData.ContainsKey(timeSlot) && i < groupedData[timeSlot].Count)
+                for (int timeSlot = 0; timeSlot < 4; timeSlot++)
                 {
-                var activity = groupedData[timeSlot][i];
-                row[$"ActivityDesc_{timeSlot * 6}_{(timeSlot + 1) * 6}"] = activity.ActivityDesc;
-                row[$"TotalHours_{timeSlot * 6}_{(timeSlot + 1) * 6}"] = activity.TotalHours;
+                    if (groupedData.ContainsKey(timeSlot) && i < groupedData[timeSlot].Count)
+                    {
+                        var activity = groupedData[timeSlot][i];
+                        row[$"ActivityDesc_{timeSlot * 6}_{(timeSlot + 1) * 6}"] = activity.ActivityDesc;
+                        row[$"TotalHours_{timeSlot * 6}_{(timeSlot + 1) * 6}"] = activity.TotalHours;
+                    }
+                    else
+                    {
+                        row[$"ActivityDesc_{timeSlot * 6}_{(timeSlot + 1) * 6}"] = string.Empty;
+                        row[$"TotalHours_{timeSlot * 6}_{(timeSlot + 1) * 6}"] = 0.0;
+                    }
                 }
-                else
-                {
-                row[$"ActivityDesc_{timeSlot * 6}_{(timeSlot + 1) * 6}"] = string.Empty;
-                row[$"TotalHours_{timeSlot * 6}_{(timeSlot + 1) * 6}"] = 0.0;
-                }
-            }
 
-            dataTable.Rows.Add(row);
+                dataTable.Rows.Add(row);
             }
 
             dataSet.Tables.Add(dataTable);
@@ -214,6 +215,22 @@ public class HomeController : Controller
         DataSet dataSet = new DataSet();
         dataSet.Tables.Add(dataTable);
         return View("Common", dataSet);
+    }
+
+
+    public async Task<IActionResult> SendEmail()
+    {
+        EmailService emailService = new EmailService();
+        try
+        {
+            emailService.SendEmail("nagendra.uvce@gmail.com", "nagendra_s_uvce@hotmail.com", "test", "Last one week Data");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending email");
+            return Ok("Email Sendt Failed" + ex.Message);
+        }
+        return Ok("Email Sent");
     }
 
     public IActionResult Privacy()

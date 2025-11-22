@@ -222,10 +222,10 @@ public class Daily15MinLogService
             .GroupBy(log => new { Year = log.ActivityDate?.Year, log.Category })
             .Select(g => new
             {
-                Year = g.Key.Year,
-                Category = g.Key.Category,
-                TotalValue = g.Sum(log => log.TotalValue),
-                DaysCount = g.Select(log => log.ActivityDate?.Date).Distinct().Count()
+            Year = g.Key.Year,
+            Category = g.Key.Category,
+            TotalValue = Math.Round(g.Sum(log => log.TotalValue), 2),
+            DaysCount = g.Select(log => log.ActivityDate?.Date).Distinct().Count()
             })
             .ToList();
 
@@ -281,7 +281,7 @@ public class Daily15MinLogService
                 // Assume 365 days for the year if no entries exist
                 var daysInYear = (year == DateTime.Now.Year) ? DateTime.Now.DayOfYear : 365;
                 var averageHrs = daysCount > 0 ? totalHrs / daysInYear : 0;
-                row[year.ToString()] = averageHrs;
+                row[year.ToString()] = Math.Round(averageHrs ,2);
             }
             averageHoursTable.Rows.Add(row);
         }
@@ -586,6 +586,7 @@ public class Daily15MinLogService
 
                 // Average based on the number of entries in that particular month
                 var averageHrs = daysCount > 0 ? totalHrs / daysCount : 0;
+                averageHrs = Math.Round(averageHrs, 2);
                 row[new DateTime(1, month, 1).ToString("MMM")] = averageHrs > 0 ? averageHrs : DBNull.Value;
             }
 

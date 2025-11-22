@@ -27,7 +27,7 @@ public class Daily15MinLogController : Controller
 
     public async Task<IActionResult> Common()
     {
-       DataSet dataSet = (new ExpensesService()).GetPayslipsSummarizedGraphWay().Result;
+        DataSet dataSet = (new ExpensesService()).GetPayslipsSummarizedGraphWay().Result;
         DataTable dataTable1 = dataSet.Tables[0];
         foreach (DataTable table in dataSet.Tables)
         {
@@ -50,9 +50,60 @@ public class Daily15MinLogController : Controller
         return View("Common", dsNew);
     }
 
+    public async Task<IActionResult> DailyLogAvgStreakSendEmail()
+    {
+        DataSet dsNew = new DataSet();
+        dsNew = (new Daily15MinLogService()).AvgStreak().Result;
+        string emailBody = "<html><body>";
+        emailBody += "<h2>Daily Log Average Streak Data</h2>";
+        emailBody += "<table border='1' style='border-collapse: collapse; width: 100%;'>";
+        emailBody += "<thead><tr style='background-color: #f2f2f2;'>";
+        string columnName = "";
+        foreach (DataTable table in dsNew.Tables)
+        {
+            emailBody += $"<th colspan='{table.Columns.Count}' style='text-align: center;'>{table.TableName}</th></tr><tr>";
+
+            foreach (DataColumn column in table.Columns)
+            {
+                columnName = column.ColumnName;
+                if (columnName.Contains("Days_Summary"))
+                {
+                    columnName = columnName.Replace("Days_Summary", " Days Summary");
+                }
+                emailBody += $"<th style='padding: 8px; text-align: left;'>{columnName}</th>";
+            }
+            emailBody += "</tr></thead><tbody>";
+
+            foreach (DataRow row in table.Rows)
+            {
+                emailBody += "<tr>";
+                foreach (var item in row.ItemArray)
+                {
+                    emailBody += $"<td style='padding: 8px; text-align: left;'>{item}</td>";
+                }
+                emailBody += "</tr>";
+            }
+            emailBody += "</tbody>";
+        }
+        emailBody += "</table>";
+        emailBody += "</body></html>";
+        EmailService emailService = new EmailService();
+        try
+        {
+            emailService.SendEmail("nagendra.uvce@gmail.com", "nagendra_s_uvce@hotmail.com", emailBody, "Last one week Data");
+            emailService.SendEmail("nagendra.uvce@gmail.com", "nagendra_subramanya@optum.com", emailBody, "Last one week Data");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending email");
+            return Ok("Email Sendt Failed" + emailBody + ex.Message);
+        }
+        return Ok("Email Sent");
+    }
+
     public IActionResult Charts()
     {
-       List<DailyLogSummaryForEachDay> lstDailyLogSummary = (new Daily15MinLogService()).GetDailyLogSummaryForEachDaysAsync().Result;
+        List<DailyLogSummaryForEachDay> lstDailyLogSummary = (new Daily15MinLogService()).GetDailyLogSummaryForEachDaysAsync().Result;
 
         return View("Charts", lstDailyLogSummary);
     }

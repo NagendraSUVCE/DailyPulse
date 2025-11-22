@@ -42,6 +42,9 @@ public class CricketFileController : Controller
 
         var response = await client.GetAsync(url);
         var html = await response.Content.ReadAsStringAsync();
+        html = html.Replace("},{", "},\n{");
+        html = html.Replace(":{", "\n:{");
+        html = html.Replace("\\", " ");
         return html;
     }
 }
