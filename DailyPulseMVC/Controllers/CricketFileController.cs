@@ -3,7 +3,8 @@ using System.Data;
 using System.Diagnostics;
 using DailyPulseMVC.Models;
 using Models.DailyLog;
-using YahooFinanceApi; // Add the namespace for Candle type
+using YahooFinanceApi;
+using Org.BouncyCastle.Crypto.Signers; // Add the namespace for Candle type
 
 namespace DailyPulseMVC.Controllers;
 
@@ -29,22 +30,38 @@ public class CricketFileController : Controller
         // iplSeries = @"https://www.espncricinfo.com/ci/engine/series/60260.html";
         return await _teamSeriesResultsService.GetTeamSeriesResults(url);
     }
-    public async Task<string> GetHtmlContentsFromUrl(string url)
+    // http://localhost:5278/CricketFile/GetHtmlContentsFromUrl?url=https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advanced;orderby=start;template=results;trophy=117;type=batting;view=innings;size=200;page=2;
+    public async Task<IActionResult> GetHtmlContentsFromUrl(string url)
     {
-        using var client = new HttpClient();
-
-        // Add headers to look like a browser
-        client.DefaultRequestHeaders.Add("User-Agent",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-        client.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-        client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.9");
-        client.DefaultRequestHeaders.Add("Referer", "https://www.google.com");
-
-        var response = await client.GetAsync(url);
-        var html = await response.Content.ReadAsStringAsync();
-        html = html.Replace("},{", "},\n{");
-        html = html.Replace(":{", "\n:{");
-        html = html.Replace("\\", " ");
-        return html;
+        if (string.IsNullOrEmpty(url))
+        {
+            url = "https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advanced;orderby=start;template=results;trophy=117;type=batting;view=innings;size=200;page=2;";
+        }
+        DataSet dataSet = new DataSet();
+        if (url.Contains("type=batting"))
+        {
+            List<BattingInnings> battingInnings = new List<BattingInnings>();
+            BattingInningsService battingInningsService = new BattingInningsService();
+            battingInnings = await battingInningsService.Main(url);
+            DataTable dtBattingDetails = DataTableConverter.ToDataTable(battingInnings);
+            dataSet.Tables.Add(dtBattingDetails);
+        }
+        if (url.Contains("type=bowling"))
+        {
+            List<BowlingInnings> bowlingInnings = new List<BowlingInnings>();
+            BowlingInningsService bowlingInningsService = new BowlingInningsService();
+            bowlingInnings = await bowlingInningsService.Main(url);
+            DataTable dtBowlingDetails = DataTableConverter.ToDataTable(bowlingInnings);
+            dataSet.Tables.Add(dtBowlingDetails);
+        }
+        if (url.Contains("type=team"))
+        {
+            List<TeamResultScore> teamResultScores = new List<TeamResultScore>();
+            TeamScoreService teamScoreService = new TeamScoreService();
+            teamResultScores = await teamScoreService.Main(url);
+            DataTable dtTeamScores = DataTableConverter.ToDataTable(teamResultScores);
+            dataSet.Tables.Add(dtTeamScores);
+        }
+        return View("Common", dataSet);
     }
 }

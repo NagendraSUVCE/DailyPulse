@@ -209,23 +209,28 @@ public class Daily15MinLogService
         }
         return lstDailyLogSummaryForEachDay;
     }
-    public async Task<DataSet> AvgStreak()
+    public async Task<DataSet> AvgStreak(bool saveInCSV = false)
     {
         var categories = new[] { "SelfHelp", "SelfCode", "SelfTech", "SelfSong", "FitbitDailySteps" };
         List<DailyLogSummaryForEachDay> lstDailyLogSummaryForEachDay = await GetDailyLogSummaryForEachDaysAsync();
+        lstDailyLogSummaryForEachDay = lstDailyLogSummaryForEachDay
+            .Where(log => log.ActivityDate?.Date < DateTime.Now.Date)
+            .ToList();
+        if (saveInCSV)
+        {
+            await (new Daily15MinLogFileService()).SaveLogSummaryForEachDayToFile(lstDailyLogSummaryForEachDay);
+        }
 
-        await (new Daily15MinLogFileService()).SaveLogSummaryForEachDayToFile(lstDailyLogSummaryForEachDay);
-        
         // Group data by year and category
         var groupedData = lstDailyLogSummaryForEachDay
             .Where(log => categories.Contains(log.Category))
             .GroupBy(log => new { Year = log.ActivityDate?.Year, log.Category })
             .Select(g => new
             {
-            Year = g.Key.Year,
-            Category = g.Key.Category,
-            TotalValue = Math.Round(g.Sum(log => log.TotalValue), 2),
-            DaysCount = g.Select(log => log.ActivityDate?.Date).Distinct().Count()
+                Year = g.Key.Year,
+                Category = g.Key.Category,
+                TotalValue = Math.Round(g.Sum(log => log.TotalValue), 2),
+                DaysCount = g.Select(log => log.ActivityDate?.Date).Distinct().Count()
             })
             .ToList();
 
@@ -281,7 +286,7 @@ public class Daily15MinLogService
                 // Assume 365 days for the year if no entries exist
                 var daysInYear = (year == DateTime.Now.Year) ? DateTime.Now.DayOfYear : 365;
                 var averageHrs = daysCount > 0 ? totalHrs / daysInYear : 0;
-                row[year.ToString()] = Math.Round(averageHrs ,2);
+                row[year.ToString()] = Math.Round(averageHrs, 2);
             }
             averageHoursTable.Rows.Add(row);
         }

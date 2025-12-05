@@ -1,0 +1,29 @@
+   url = @"https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advanced;orderby=start;template=results;trophy=117;type=batting;view=innings";
+this gives batting details of the innings. we are storing in batting innings
+
+http://localhost:5278/CricketFile/GetHtmlContentsFromUrl?url=https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advanced;orderby=start;template=results;trophy=117;type=batting;view=innings;size=200;page=2;
+
+batting:-
+https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advanced;orderby=start;page=2;size=200;template=results;trophy=117;type=batting;view=innings
+
+bowling :- 
+https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advanced;orderby=start;size=200;template=results;trophy=117;type=bowling;view=innings
+
+fieldng:-
+https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advanced;orderby=caught_keeper;template=results;trophy=117;type=fielding;view=innings
+
+teamresults:-
+https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advanced;orderby=start;size=200;template=results;trophy=117;type=team;view=innings
+Team,Score,OVers,RPO,Inns,Result,Opp,Ground,Date
+https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advanced;orderby=runs;size=200;template=results;trophy=117;type=team;view=results  
+https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advanced;orderby=start;size=200;template=results;trophy=117;type=team;view=match
+Team,Runs,Wkts,Balls,Ave,RPO,Result,Opp,Ground,Date,
+
+Extras:-
+https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advanced;orderby=start;size=200;template=results;trophy=117;type=team;view=extras_innings
+
+https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advanced;orderby=start;size=200;template=results;trophy=117;type=team;view=extras_innings
+
+Series:-
+https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advanced;orderby=start;size=200;template=results;trophy=117;type=team;view=series
+Series Details

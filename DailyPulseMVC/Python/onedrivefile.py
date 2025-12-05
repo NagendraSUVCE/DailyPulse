@@ -14,7 +14,7 @@ def list_files_and_save_to_csv(directory):
     with open(output_file, mode='w', newline='', encoding='utf-8') as csvfile:
         csv_writer = csv.writer(csvfile)
         # Write the header row
-        csv_writer.writerow(["DatetimeCreated", "DatetimeModified", "Filename", "Foldername", "SizeInBytes"])
+        csv_writer.writerow(["DatetimeCreated", "DatetimeModified", "Filename", "Foldername", "SizeInBytes", "FullFileName"])
 
         # Walk through the directory
         buffer = []
@@ -33,7 +33,7 @@ def list_files_and_save_to_csv(directory):
                     # Increment file count
                     file_count += 1
                     # Add file details to the buffer
-                    buffer.append([created_time, modified_time, file, folder_name, size_in_bytes])
+                    buffer.append([created_time, modified_time, file, folder_name, size_in_bytes, file_path])
 
                     # Write to CSV if buffer reaches 70000 files
                     if len(buffer) >= 70000:

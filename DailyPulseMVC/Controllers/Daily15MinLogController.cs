@@ -42,10 +42,10 @@ public class Daily15MinLogController : Controller
         return await Task.FromResult(View(dsNew));
     }
 
-    public IActionResult AvgStreak()
+    public IActionResult AvgStreak(bool saveInCSV = false)
     {
         DataSet dsNew = new DataSet();
-        dsNew = (new Daily15MinLogService()).AvgStreak().Result;
+        dsNew = (new Daily15MinLogService()).AvgStreak(saveInCSV).Result;
 
         return View("Common", dsNew);
     }
@@ -53,7 +53,7 @@ public class Daily15MinLogController : Controller
     public async Task<IActionResult> DailyLogAvgStreakSendEmail()
     {
         DataSet dsNew = new DataSet();
-        dsNew = (new Daily15MinLogService()).AvgStreak().Result;
+        dsNew = (new Daily15MinLogService()).AvgStreak(false).Result;
         string emailBody = "<html><body>";
         emailBody += "<h2>Daily Log Average Streak Data</h2>";
         emailBody += "<table border='1' style='border-collapse: collapse; width: 100%;'>";
