@@ -6,7 +6,7 @@ using HtmlAgilityPack;
 
 public class TeamScoreService
 {
-    public async Task<List<TeamResultScore>> Main(string url)
+    public async Task<List<TeamResultScore>> GetTeamResultScoreList(string url)
     {
         List<TeamResultScore> teamResultScoresList = new List<TeamResultScore>();
         //string url = "https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advanced;orderby=batted_score;page=1;template=results;trophy=117;type=batting;view=innings";

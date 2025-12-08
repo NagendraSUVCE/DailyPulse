@@ -66,20 +66,28 @@ public class BowlingInnings
 
 public class TeamResultScore
 {
-public string Team { get; set; }
-public string TeamIndexCI { get; set; }
-public string Score { get; set; }
-public string Overs { get; set; }
-public string RPO { get; set; }
-public int Inns { get; set; }
-public string Result { get; set; }
-public string OppTeam { get; set; }
-public string OppTeamIndexCI { get; set; }
-public string Ground { get; set; }
-public string GroundIndexCI { get; set; }
+    public string Team { get; set; }
+    public string TeamIndexCI { get; set; }
+    public string Score { get; set; }
+    public string Overs { get; set; }
+    public string RPO { get; set; }
+    public int Inns { get; set; }
+    public string Result { get; set; }
+    public string OppTeam { get; set; }
+    public string OppTeamIndexCI { get; set; }
+    public string Ground { get; set; }
+    public string GroundIndexCI { get; set; }
     public string DateString { get; set; }
     public DateTime StartDate { get; set; }
     public string MatchIndexCI { get; set; }
     public string Temp { get; set; }
     public string TempAgain { get; set; }
+}
+
+public class Pagination
+{
+    public String CurrentPage { get; set; }
+    public String TotalPages { get; set; }
+    public String PageSize { get; set; }
+    public String TotalRecords { get; set; }
 }

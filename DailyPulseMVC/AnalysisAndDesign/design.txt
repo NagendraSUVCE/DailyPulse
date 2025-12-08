@@ -27,3 +27,6 @@ https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advance
 Series:-
 https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advanced;orderby=start;size=200;template=results;trophy=117;type=team;view=series
 Series Details
+
+by date:-
+https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advanced;orderby=start;size=200;spanmax1=18+Apr+2008;spanmin1=18+Apr+2008;spanval1=span;template=results;trophy=117;type=batting;view=innings

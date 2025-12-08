@@ -42,6 +42,7 @@ public class CricketFileController : Controller
         {
             List<BattingInnings> battingInnings = new List<BattingInnings>();
             BattingInningsService battingInningsService = new BattingInningsService();
+            await battingInningsService.LoopThroughDates();
             battingInnings = await battingInningsService.Main(url);
             DataTable dtBattingDetails = DataTableConverter.ToDataTable(battingInnings);
             dataSet.Tables.Add(dtBattingDetails);
@@ -58,7 +59,7 @@ public class CricketFileController : Controller
         {
             List<TeamResultScore> teamResultScores = new List<TeamResultScore>();
             TeamScoreService teamScoreService = new TeamScoreService();
-            teamResultScores = await teamScoreService.Main(url);
+            teamResultScores = await teamScoreService.GetTeamResultScoreList(url);
             DataTable dtTeamScores = DataTableConverter.ToDataTable(teamResultScores);
             dataSet.Tables.Add(dtTeamScores);
         }
