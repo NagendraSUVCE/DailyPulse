@@ -37,12 +37,18 @@ public class CricketFileController : Controller
         {
             url = "https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advanced;orderby=start;template=results;trophy=117;type=batting;view=innings;size=200;page=2;";
         }
+        BattingInningsService battingInningsService = new BattingInningsService();
+        for (int i = 0; i < 100; i++)
+        {
+            Console.WriteLine($"Bowling Iteration number: {i + 1}");
+            // await battingInningsService.LoopThroughDates("Bowling");
+            Console.WriteLine($"Batting Iteration number: {i + 1}");
+            // await battingInningsService.LoopThroughDates("Batting");
+        }
         DataSet dataSet = new DataSet();
         if (url.Contains("type=batting"))
         {
             List<BattingInnings> battingInnings = new List<BattingInnings>();
-            BattingInningsService battingInningsService = new BattingInningsService();
-            await battingInningsService.LoopThroughDates();
             battingInnings = await battingInningsService.Main(url);
             DataTable dtBattingDetails = DataTableConverter.ToDataTable(battingInnings);
             dataSet.Tables.Add(dtBattingDetails);
@@ -63,6 +69,32 @@ public class CricketFileController : Controller
             DataTable dtTeamScores = DataTableConverter.ToDataTable(teamResultScores);
             dataSet.Tables.Add(dtTeamScores);
         }
+        return View("Common", dataSet);
+    }
+    public async Task<IActionResult> GetAllPaginations()
+    {
+        BattingInningsService cricinfoPaginationService = new BattingInningsService();
+        DataSet dataSet = new DataSet();
+        List<CricinfoPagination> paginations = new List<CricinfoPagination>();
+        paginations = await cricinfoPaginationService.GetAllPages();
+        DataTable dtPaginations = DataTableConverter.ToDataTable(paginations);
+        dataSet.Tables.Add(dtPaginations);
+        return View("Common", dataSet);
+    }
+    public async Task<IActionResult> SaveEveryStatsAsHtml()
+    {
+        BattingInningsService cricinfoPaginationService = new BattingInningsService();
+        DataSet dataSet = new DataSet();
+        List<CricinfoPagination> paginations = new List<CricinfoPagination>();
+        paginations = await cricinfoPaginationService.GetAllPages();
+        foreach (var pagination in paginations)
+        {
+            InningsService inningsService = new InningsService();
+            inningsService.cricinfoPaginations = new List<CricinfoPagination> { pagination };
+            await inningsService.GetAllHtmls();
+        }
+        DataTable dtPaginations = DataTableConverter.ToDataTable(paginations);
+        dataSet.Tables.Add(dtPaginations);
         return View("Common", dataSet);
     }
 }

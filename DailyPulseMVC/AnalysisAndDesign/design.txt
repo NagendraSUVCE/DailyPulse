@@ -1,6 +1,9 @@
    url = @"https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advanced;orderby=start;template=results;trophy=117;type=batting;view=innings";
 this gives batting details of the innings. we are storing in batting innings
 
+Class 1 tests , 2 Odis , 3 t20is , 6 AllTwenty20, 11 Allinternations
+type batting, bowling, fielding, team, extras_innings
+
 http://localhost:5278/CricketFile/GetHtmlContentsFromUrl?url=https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advanced;orderby=start;template=results;trophy=117;type=batting;view=innings;size=200;page=2;
 
 batting:-
@@ -30,3 +33,6 @@ Series Details
 
 by date:-
 https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;filter=advanced;orderby=start;size=200;spanmax1=18+Apr+2008;spanmin1=18+Apr+2008;spanval1=span;template=results;trophy=117;type=batting;view=innings
+
+https://stats.espncricinfo.com/ci/engine/stats/index.html?class=6;
+filter=advanced;orderby=start;page=131;size=200;spanmax1=1+Dec+2025;spanval1=span;template=results;trophy=117;type=batting;view=innings

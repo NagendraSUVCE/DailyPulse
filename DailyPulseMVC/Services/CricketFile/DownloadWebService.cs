@@ -16,7 +16,7 @@ namespace DailyPulseMVC.Services.CricketFile
         {
             _httpClient = new HttpClient
             {
-                Timeout = TimeSpan.FromSeconds(10)
+                Timeout = TimeSpan.FromSeconds(30)
             };
 
             // Define a retry policy with exponential backoff
@@ -35,6 +35,7 @@ namespace DailyPulseMVC.Services.CricketFile
         {
             return await _retryPolicy.ExecuteAsync(async () =>
             {
+                Console.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}] Attempting to download content from URL: {url}");
                 var response = await _httpClient.GetAsync(url);
                 response.EnsureSuccessStatusCode();
                 return await response.Content.ReadAsStringAsync();

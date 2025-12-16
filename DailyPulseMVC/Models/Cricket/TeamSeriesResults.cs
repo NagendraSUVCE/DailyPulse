@@ -84,10 +84,15 @@ public class TeamResultScore
     public string TempAgain { get; set; }
 }
 
-public class Pagination
+public class CricinfoPagination
 {
-    public String CurrentPage { get; set; }
-    public String TotalPages { get; set; }
-    public String PageSize { get; set; }
-    public String TotalRecords { get; set; }
+    public int CricketClass { get; set; } // 1 - Tests ; 2 - ODI; 3 - T20I; 6 - Twenty20, IPL
+    public string CricketClassDesc { get; set; } // 1 - Tests ; 2 - ODI; 3 - T20I; 6 - Twenty20, IPL
+    public string CricketType { get; set; } // batting, bowling, fielding, team
+    public string CricketView { get; set; } // innings
+    public int CurrentPage { get; set; }
+    public int TotalPages { get; set; }
+    public int PageSize { get; set; }
+    public int TotalRecords { get; set; }
+    public string CricinfoStatsUrl { get; set; }
 }
