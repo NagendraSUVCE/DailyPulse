@@ -49,7 +49,7 @@ public class CricketFileController : Controller
         if (url.Contains("type=batting"))
         {
             List<BattingInnings> battingInnings = new List<BattingInnings>();
-            battingInnings = await battingInningsService.Main(url);
+            battingInnings = await battingInningsService.ParseBattingInningsFromHtml(url);
             DataTable dtBattingDetails = DataTableConverter.ToDataTable(battingInnings);
             dataSet.Tables.Add(dtBattingDetails);
         }
@@ -95,6 +95,15 @@ public class CricketFileController : Controller
         }
         DataTable dtPaginations = DataTableConverter.ToDataTable(paginations);
         dataSet.Tables.Add(dtPaginations);
+        return View("Common", dataSet);
+    }
+    public async Task<IActionResult> ProcessStatsFromHtmlFile()
+    {
+        CricketProcessorFromfile cricketProcessor = new CricketProcessorFromfile();
+        DataSet dataSet = new DataSet();
+        List<BattingInnings> battingInnings = await cricketProcessor.GetBattingInningsFromAllFiles();
+        DataTable dtBattingDetails = DataTableConverter.ToDataTable(battingInnings);
+        dataSet.Tables.Add(dtBattingDetails);
         return View("Common", dataSet);
     }
 }

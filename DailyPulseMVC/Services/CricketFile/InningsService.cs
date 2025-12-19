@@ -25,13 +25,47 @@ public class InningsService
             {
                 string url = GetUrl(pagination, i); //$"{pagination.CricinfoStatsUrl};page={i}";
                 string completeFilePath = GetFileName(pagination, i);
-                if (File.Exists(completeFilePath))
+
+                if (i <= pagination.TotalPages - 2 && File.Exists(completeFilePath))
                 {
                     Console.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}] Skipped downloading as file already exists: {completeFilePath}");
                     continue;
                 }
-                await SaveUrlContentToFileAsync(url, completeFilePath);
+                try
+                {
+                    await SaveUrlContentToFileAsync(url, completeFilePath);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}] Error downloading URL: {url}. Exception: {ex.Message}");
+                    continue;
+                }
             }
+        }
+    }
+    public async Task GetAllHtmlsParallel()
+    {
+        foreach (var pagination in cricinfoPaginations)
+        {
+            await Task.WhenAll(Enumerable.Range(1, pagination.TotalPages).Select(async i =>
+            {
+                string url = GetUrl(pagination, i);
+                string completeFilePath = GetFileName(pagination, i);
+
+                if (i <= pagination.TotalPages - 2 && File.Exists(completeFilePath))
+                {
+                    Console.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}] Skipped downloading as file already exists: {completeFilePath}");
+                    return;
+                }
+                try
+                {
+                    await SaveUrlContentToFileAsync(url, completeFilePath);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}] Error downloading URL: {url}. Exception: {ex.Message}");
+                }
+            }));
         }
     }
     private string GetUrl(CricinfoPagination cricinfoPagination, int iterationCount)

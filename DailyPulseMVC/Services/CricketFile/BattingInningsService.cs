@@ -96,7 +96,7 @@ public class BattingInningsService
             {
                 if (url.Contains("type=batting"))
                 {
-                    battingInnings = await Main(url);
+                    battingInnings = await ParseBattingInningsFromHtml(url);
                     if (battingInnings.Count > 0)
                     {
                         isSaveSuccess = await SaveBattingInningsToCsv(battingInnings, folderPath, fileName);
@@ -145,7 +145,8 @@ public class BattingInningsService
                                         $"{url}," +
                                         $"{recordsExists}," +
                                         $"{status}," +
-                                        $"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)}"); }
+                                        $"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)}");
+                }
             }
             catch (Exception ex)
             {
@@ -226,12 +227,12 @@ public class BattingInningsService
         }
         return saveBatting;
     }
-    public async Task<List<BattingInnings>> Main(string url)
+    public async Task<List<BattingInnings>> ParseBattingInningsFromHtml(string html)
     {
         string dateString = String.Empty, tempAgain = string.Empty;
         List<BattingInnings> battingInningsList = new List<BattingInnings>();
 
-        var html = await _downloadWebService.DownloadContentAsync(url);
+        // var html = await _downloadWebService.DownloadContentAsync(url);
 
         HtmlDocument doc = new HtmlDocument();
         doc.LoadHtml(html);
@@ -368,7 +369,21 @@ public class BattingInningsService
         }
         return battingInningsList;
     }
+public async Task<List<BattingInnings>> GetAllBattingInnings(string filePath)
+    {
+        List<BattingInnings> battingInningsList = new List<BattingInnings>();
+        
+        return battingInningsList;
+    }
+    public async Task<List<BattingInnings>> GetBattingInningsListFromFile(string filePath)
+    {
 
+        List<BattingInnings> battingInningsList = new List<BattingInnings>();
+        string html = await File.ReadAllTextAsync(filePath);
+        battingInningsList = await ParseBattingInningsFromHtml(html);
+        return battingInningsList;
+
+    }
     public async Task<List<CricinfoPagination>> GetAllPages()
     {
         List<CricinfoPagination> allPages = new List<CricinfoPagination>();
@@ -382,11 +397,11 @@ public class BattingInningsService
             Console.WriteLine($"Processing format: {formatDescription}");
             foreach (CricketType cricketType in Enum.GetValues(typeof(CricketType)))
             {
-                   var cricketTypeDescription = cricketType.GetType()
-                                          .GetField(cricketType.ToString())
-                                          .GetCustomAttributes(typeof(DescriptionAttribute), false)
-                                          .Cast<DescriptionAttribute>()
-                                          .FirstOrDefault()?.Description ?? cricketType.ToString();
+                var cricketTypeDescription = cricketType.GetType()
+                                       .GetField(cricketType.ToString())
+                                       .GetCustomAttributes(typeof(DescriptionAttribute), false)
+                                       .Cast<DescriptionAttribute>()
+                                       .FirstOrDefault()?.Description ?? cricketType.ToString();
                 var pageCount = await GetPageCount((int)CricketClass, 200, "Innings", new DateTime(2025, 12, 01), cricketTypeDescription);
                 pageCount.CricketClassDesc = formatDescription;
                 allPages.Add(pageCount);
@@ -411,7 +426,7 @@ public class BattingInningsService
                          $"spanval1=span;" +
                          $"template=results;" +
                          $"view={cricketView.ToLower()};" +
-                         $"spanmax1={startDate:dd+MMM+yyyy};" +
+                         //$"spanmax1={startDate:dd+MMM+yyyy};" +
                          $"type={cricketType.ToLower()};";
 
         if (cricketClass == 6)
