@@ -6,13 +6,16 @@ https://www.espncricinfo.com/records/trophy/team-series-results/indian-premier-l
 
 */
 
-public class CricketProcessorFromfile
+public class CricketProcessorFromFile
 {
 
   string baseFolderPath = "";
-  public CricketProcessorFromfile()
+  BattingInningsService battingInningsService = null;
+    public CricketProcessorFromFile()
   {
-baseFolderPath = "/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/SelfCode/DatabaseInCSV/CricketFile/CI_AllHtmls/";
+    baseFolderPath = "/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneDrive-Krishna/Nagendra/SelfCode/DatabaseInCSV/CricketFile/CI_AllHtmls/";
+
+     battingInningsService = new BattingInningsService();
   }
   public async Task<List<BattingInnings>> GetBattingInningsFromAllFiles()
   {
@@ -20,12 +23,29 @@ baseFolderPath = "/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneD
     try
     {
       var files = Directory.GetFiles(baseFolderPath, "*batting_innings*", SearchOption.AllDirectories);
+      // order by file by name
+      files = files.OrderBy(f => Path.GetFileName(f)).ToArray();
       foreach (var file in files)
       {
+
+        // Generate the CSV file path
+        string processedFolderPath = baseFolderPath.Replace("CI_AllHtmls", "Processed");
+        string relativeFilePath = Path.GetRelativePath(baseFolderPath, file);
+        string csvFilePath = Path.Combine(processedFolderPath, Path.ChangeExtension(relativeFilePath, ".csv"));
+        if (File.Exists(csvFilePath))
+        {
+          Console.WriteLine($"CSV file already exists: {csvFilePath}");
+          continue; // Skip processing this file
+        }
         var innings = await GetBattingInningsFromFile(file);
-        allBattingInnings.AddRange(innings);
+        // allBattingInnings.AddRange(innings);
+        allBattingInnings = innings;
         Console.WriteLine($"[{DateTime.Now}] Successfully processed file: {file}");
-        break; // Remove this line to process all files
+
+        await battingInningsService.SaveBattingInningsToCsv(innings, csvFilePath);
+
+        Console.WriteLine($"CSV file will be saved at: {csvFilePath}");
+        // break; // Remove this line to process all files
       }
     }
     catch (Exception ex)
@@ -43,9 +63,13 @@ baseFolderPath = "/Users/nagendra_subramanya@optum.com/Library/CloudStorage/OneD
       Console.WriteLine($"File does not exist: {filePath}");
       return battingInnings;
     }
+
+
     string htmlContent = File.ReadAllText(filePath);
-    BattingInningsService battingInningsService = new BattingInningsService();
+
+
     battingInnings = await battingInningsService.ParseBattingInningsFromHtml(htmlContent);
+
     return battingInnings;
   }
 }

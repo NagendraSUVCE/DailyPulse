@@ -99,7 +99,7 @@ public class BattingInningsService
                     battingInnings = await ParseBattingInningsFromHtml(url);
                     if (battingInnings.Count > 0)
                     {
-                        isSaveSuccess = await SaveBattingInningsToCsv(battingInnings, folderPath, fileName);
+                        isSaveSuccess = await SaveBattingInningsToCsv(battingInnings, fileName);
                         recordsExists = "True";
                         iterationCount++;
                     }
@@ -192,18 +192,27 @@ public class BattingInningsService
         }
         return saveBowling;
     }
-    public async Task<bool> SaveBattingInningsToCsv(List<BattingInnings> battingInningsList, string folderPath, string fileName)
+    public async Task<bool> SaveBattingInningsToCsv(List<BattingInnings> battingInningsList,  string csvFilePath)
     {
         bool saveBatting = false;
-        string filePath = Path.Combine(baseFolderPath, folderPath, fileName);
-
+        if (battingInningsList == null || battingInningsList.Count == 0)
+        {
+            return saveBatting;
+        }
         try
         {
-            Directory.CreateDirectory(Path.Combine(baseFolderPath, folderPath));
+            
+    // Ensure the directory for the CSV file exists
+    string csvDirectory = Path.GetDirectoryName(csvFilePath);
+    if (!Directory.Exists(csvDirectory))
+    {
+      Directory.CreateDirectory(csvDirectory);
+    }
+    
 
-            if (!File.Exists(filePath))
+            if (!File.Exists(csvFilePath))
             {
-                using (var writer = new StreamWriter(filePath))
+                using (var writer = new StreamWriter(csvFilePath))
                 {
                     writer.WriteLine("PlayerName,Runs,RunsNotOut,Mins,BallsFaced,Four4s,Sixers,StrikeRate,Inns,ForTeam,OppTeam,Ground,DateString,StartDate,PlayerIndexCI,GroundIndexCI,OppTeamIndexCI,TempAgain,MatchIndexCI");
 
@@ -213,12 +222,12 @@ public class BattingInningsService
                     }
                 }
 
-                Console.WriteLine($"File saved successfully at {filePath}");
+                Console.WriteLine($"File saved successfully at {csvFilePath}");
                 saveBatting = true;
             }
             else
             {
-                Console.WriteLine($"File already exists at {filePath}. No changes were made.");
+                Console.WriteLine($"File already exists at {csvFilePath}. No changes were made.");
             }
         }
         catch (Exception ex)

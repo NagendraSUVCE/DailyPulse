@@ -99,7 +99,7 @@ public class CricketFileController : Controller
     }
     public async Task<IActionResult> ProcessStatsFromHtmlFile()
     {
-        CricketProcessorFromfile cricketProcessor = new CricketProcessorFromfile();
+        CricketProcessorFromFile cricketProcessor = new CricketProcessorFromFile();
         DataSet dataSet = new DataSet();
         List<BattingInnings> battingInnings = await cricketProcessor.GetBattingInningsFromAllFiles();
         DataTable dtBattingDetails = DataTableConverter.ToDataTable(battingInnings);
